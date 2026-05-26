@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  refundrex:
+    build: .
+    container_name: refundrex
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DEMO_MODE=${DEMO_MODE:-true}
+      - GOAT_RPC_URL=${GOAT_RPC_URL:-https://rpc.goat.network}
+      - GOAT_CHAIN_ID=${GOAT_CHAIN_ID:-2345}
+      - GOAT_EXPLORER_URL=${GOAT_EXPLORER_URL:-https://explorer.goat.network}
+      - ERC8004_REGISTRY_ADDRESS=${ERC8004_REGISTRY_ADDRESS:-0x8004A169FB4a3325136EB29fA0ceB6D2e539a432}
+      - ERC8004_AGENT_NAME=${ERC8004_AGENT_NAME:-refundrex_bot}
+      - GOATX402_API_URL=${GOATX402_API_URL:-https://x402-merchant.goat.network/api}
+      - GOATX402_MERCHANT_ID=${GOATX402_MERCHANT_ID:-refundrex}
+      - GOATX402_TOKEN=${GOATX402_TOKEN:-USDC}
+      - NEXT_PUBLIC_DEMO_MODE=${NEXT_PUBLIC_DEMO_MODE:-true}
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      # ⚠️ NEVER put real private keys here in committed files. Use a .env.local
+      # mounted via `env_file:` instead.
+    # env_file:
+    #   - .env.local
