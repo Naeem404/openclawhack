@@ -9,13 +9,17 @@
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
     "./types": "./src/types.ts",
-    "./abi": "./src/abi.ts"
+    "./abi": "./src/abi.ts",
+    "./x402": "./src/x402.ts",
+    "./env": "./src/env.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
+    "viem": "^2.21.55",
     "zod": "^3.23.8"
   },
   "devDependencies": {

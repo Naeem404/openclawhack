@@ -28,8 +28,13 @@ const RegistryEntrySchema = z.object({
 const RegistrySchema = z.array(RegistryEntrySchema);
 type RegistryEntry = z.infer<typeof RegistryEntrySchema>;
 
+const DEFAULT_REGISTRY = JSON.stringify([
+  { url: "http://localhost:3101", skills: ["research.web"] },
+  { url: "http://localhost:3102", skills: ["write.brief"] },
+]);
+
 function loadRegistry(): RegistryEntry[] {
-  const raw = process.env.SPECIALIST_REGISTRY ?? "[]";
+  const raw = process.env.SPECIALIST_REGISTRY ?? DEFAULT_REGISTRY;
   return RegistrySchema.parse(JSON.parse(raw));
 }
 
@@ -65,7 +70,7 @@ export async function solicitBids(subtask: Subtask): Promise<Bid[]> {
       try {
         const res = await fetch(url, { signal: ctrl.signal });
         if (!res.ok) throw new Error(`bid http ${res.status}`);
-        const json = await res.json();
+        const json = (await res.json()) as Record<string, unknown>;
         return BidSchema.parse({ ...json, endpoint: c.url });
       } finally {
         clearTimeout(to);

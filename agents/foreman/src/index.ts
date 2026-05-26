@@ -9,7 +9,7 @@
  *   GET  /jobs/:id/events      → SSE stream of SwarmEvents for the job
  *   GET  /jobs/:id             → final JobResult (once completed)
  */
-import "dotenv/config";
+import "@herd/shared/env";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { readFileSync } from "node:fs";
@@ -66,19 +66,40 @@ app.get("/jobs/:id/events", (c) => {
   c.header("Content-Type", "text/event-stream");
   c.header("Cache-Control", "no-store");
   c.header("Connection", "keep-alive");
+  const encoder = new TextEncoder();
   return new Response(
     new ReadableStream({
       start(controller) {
-        const unsubscribe = bus.subscribe(jobId, (e) => {
-          controller.enqueue(`data: ${JSON.stringify(e)}\n\n`);
+        let closed = false;
+        let unsubscribe: (() => void) | undefined;
+        unsubscribe = bus.subscribe(jobId, (e) => {
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(e)}\n\n`));
+          } catch {
+            closed = true;
+            unsubscribe?.();
+            return;
+          }
           if (e.type === "job.completed" || e.type === "job.failed") {
-            controller.close();
-            unsubscribe();
+            closed = true;
+            try {
+              controller.close();
+            } catch {
+              // already closed
+            }
+            unsubscribe?.();
           }
         });
       },
     }),
-    { headers: { "Content-Type": "text/event-stream" } },
+    {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-store",
+        Connection: "keep-alive",
+      },
+    },
   );
 });
 

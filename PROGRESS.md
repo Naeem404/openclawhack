@@ -48,3 +48,30 @@ P00 ✅ → P01 ⏳ (x402-hono wire-up) → P03 ⏳ (registration end-to-end liv
 
 - [ ] If credentials arrive: switch `X402_MODE` to `facilitator`. Otherwise stay `local`.
 - [ ] Custom contract escrow (P14): only if all P00–P13 done by 16:00.
+
+---
+
+## Completion Pass (13:10)
+
+2026-05-26 13:00  P01  done   Specialist x402 gate: `/work` returns 402 with `PaymentRequirement` body, verifies `X-PAYMENT` via on-chain receipt (or mock).
+2026-05-26 13:00  P02  done   Writer x402 gate (mirror of P01).
+2026-05-26 13:01  P05  done   Foreman dispatch: zero-config default registry; bid solicitation + ranking working.
+2026-05-26 13:02  P06  done   `paidPost` 402 → on-chain USDC transfer (or fake hash in mock) → retry with X-PAYMENT.
+2026-05-26 13:03  P07  done   `postFeedback` writes real `giveFeedback` on Reputation Registry in local mode; deterministic hash in mock.
+2026-05-26 13:04  P08  done   SSE bus buffers events per jobId so subscribers attaching after job start still see early events.
+2026-05-26 13:05  P09–P11 done  Dashboard already complete from scaffold pass; verified SSE proxy + job proxy work.
+2026-05-26 13:08  shared    done  `@herd/shared/x402` (build402, decode/verify/encode payment), `@herd/shared/env` (loads root .env regardless of cwd), composite tsconfig refs removed.
+2026-05-26 13:09  P12  done   E2E dry run in mock mode: brief → 2 subtasks → 2 paid /work calls → deliverable returned with full ledger + receipts.
+
+**Runtime status (zero-config, mock mode):**
+- `pnpm.cmd dev` boots foreman:3100, researcher:3101, writer:3102, dashboard:3000.
+- POST http://localhost:3100/jobs returns a `jobId`; GET /jobs/:id/events streams 9 SSE events; GET /jobs/:id returns the final deliverable.
+- Total spend reported: 0.13 USDC (0.05 researcher + 0.08 writer).
+- `pnpm -r typecheck` is green across all 6 TS workspaces.
+
+**To enable real chain:**
+1. Add `OPENAI_API_KEY` to `.env`.
+2. Add `FOREMAN_PRIVATE_KEY`, `RESEARCHER_PRIVATE_KEY`, `WRITER_PRIVATE_KEY` (funded with BTC + USDC on testnet3).
+3. Set `X402_MODE=local`.
+4. `pnpm register --all` to populate `*_AGENT_ID` and `*_WALLET_ADDRESS`.
+5. Re-run `pnpm.cmd dev` — every payment is now a real USDC transfer, every feedback is a real Reputation Registry tx.

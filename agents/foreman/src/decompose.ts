@@ -4,7 +4,8 @@
  */
 import OpenAI from "openai";
 import { z } from "zod";
-import { SubtaskSchema, type Subtask, SKILLS } from "@herd/shared/types";
+import { SubtaskSchema, type Subtask } from "@herd/shared/types";
+import { SKILLS } from "@herd/shared/constants";
 
 const PromptTemplate = (brief: string, budgetUsdc: string): string => `
 You are a project foreman. Decompose the user's brief into the SMALLEST ordered

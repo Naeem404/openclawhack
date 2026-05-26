@@ -66,5 +66,4 @@ export const GOAT_GAS = {
   maxFeePerGas: 1_000_000n,
 } as const;
 
-/** x402 mode toggle. */
-export type X402Mode = "facilitator" | "local";
+// X402Mode lives in ./x402.ts — re-exported from the package index.

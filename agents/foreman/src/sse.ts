@@ -15,31 +15,64 @@ export interface EventBus {
   subscribe(jobId: string, fn: Listener): () => void;
 }
 
+interface Channel {
+  buffer: SwarmEvent[];
+  listeners: Set<Listener>;
+  closed: boolean;
+}
+
+const MAX_BUFFER = 200;
+const RETENTION_AFTER_CLOSE_MS = 60_000;
+
 export function createEventBus(): EventBus {
-  const channels = new Map<string, Set<Listener>>();
+  const channels = new Map<string, Channel>();
+
+  function getOrCreate(jobId: string): Channel {
+    let c = channels.get(jobId);
+    if (!c) {
+      c = { buffer: [], listeners: new Set(), closed: false };
+      channels.set(jobId, c);
+    }
+    return c;
+  }
 
   return {
     publish(jobId, e) {
-      const subs = channels.get(jobId);
-      if (!subs || subs.size === 0) return;
-      for (const fn of subs) {
+      const c = getOrCreate(jobId);
+      c.buffer.push(e);
+      if (c.buffer.length > MAX_BUFFER) c.buffer.shift();
+      for (const fn of c.listeners) {
         try {
           fn(e);
         } catch (err) {
           console.warn("[sse] listener threw:", err);
         }
       }
+      if (e.type === "job.completed" || e.type === "job.failed") {
+        c.closed = true;
+        // keep around briefly so late subscribers can still replay the run
+        setTimeout(() => channels.delete(jobId), RETENTION_AFTER_CLOSE_MS);
+      }
     },
     subscribe(jobId, fn) {
-      let set = channels.get(jobId);
-      if (!set) {
-        set = new Set();
-        channels.set(jobId, set);
+      const c = getOrCreate(jobId);
+      c.listeners.add(fn);
+      // Replay buffered events asynchronously so the caller can capture the
+      // unsubscribe handle before any listener fires (avoids TDZ on `const`).
+      if (c.buffer.length > 0) {
+        const snapshot = c.buffer.slice();
+        queueMicrotask(() => {
+          for (const e of snapshot) {
+            try {
+              fn(e);
+            } catch (err) {
+              console.warn("[sse] replay threw:", err);
+            }
+          }
+        });
       }
-      set.add(fn);
       return () => {
-        set?.delete(fn);
-        if (set && set.size === 0) channels.delete(jobId);
+        c.listeners.delete(fn);
       };
     },
   };

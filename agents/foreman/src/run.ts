@@ -80,15 +80,14 @@ export async function runJob(
       jobId,
       subtaskId: st.id,
       amountUsdc: winner.priceUsdc,
-      payTo: winner.agentAddress,
+      payTo: winner.agentAddress as `0x${string}`,
       at: Date.now(),
     });
 
-    // TODO(sub-agent P06): pass a real WalletClient instead of `null as any`
     const { data, settlement } = await paidPost<{ artifact: unknown }>(
       `${winner.endpoint}/work`,
       { spec },
-      { maxPriceUsdc: winner.priceUsdc, wallet: null as never },
+      { maxPriceUsdc: winner.priceUsdc },
     );
 
     if (settlement.txHash) {
@@ -96,7 +95,7 @@ export async function runJob(
         type: "payment.settled",
         jobId,
         subtaskId: st.id,
-        txHash: settlement.txHash,
+        txHash: settlement.txHash as `0x${string}`,
         blockNumber: settlement.blockNumber,
         at: Date.now(),
       });

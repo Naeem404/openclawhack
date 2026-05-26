@@ -8,7 +8,7 @@
  *   GET  /bid?spec=…       → quote a price for the given spec
  *   POST /work             → x402-gated; on payment, performs research
  */
-import "dotenv/config";
+import "@herd/shared/env";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { readFileSync } from "node:fs";
@@ -17,6 +17,12 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { PORTS, SKILLS, DEFAULT_PRICES } from "@herd/shared/constants";
 import { type Bid } from "@herd/shared/types";
+import {
+  build402Body,
+  verifyPayment,
+  encodeSettlementHeader,
+  getX402Mode,
+} from "@herd/shared/x402";
 import { performResearch } from "./skill.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -39,7 +45,7 @@ app.get("/bid", (c) => {
   // For MVP every spec gets the same price. v2 can scale price by spec complexity.
   const bid: Bid = {
     agentId: process.env.RESEARCHER_AGENT_ID ?? "0",
-    agentAddress: (process.env.RESEARCHER_WALLET_ADDRESS ?? "0x0000000000000000000000000000000000000000") as `0x${string}`,
+    agentAddress: (process.env.RESEARCHER_WALLET_ADDRESS || "0x0000000000000000000000000000000000000001") as `0x${string}`,
     endpoint: `http://localhost:${PORTS.researcher}`,
     skill: SKILLS.RESEARCH_WEB,
     priceUsdc: "0.05",
@@ -69,12 +75,43 @@ const WorkBodySchema = z.object({
 });
 
 app.post("/work", async (c) => {
-  // TODO: gate behind x402 middleware once SDK wiring is in.
+  const mode = getX402Mode();
+  const envPayTo = process.env.RESEARCHER_WALLET_ADDRESS || undefined;
+  if (!envPayTo && mode !== "mock") {
+    return c.json({ error: "agent_not_configured", code: "NO_PAYTO" }, 500);
+  }
+  const payTo = envPayTo ?? "0x0000000000000000000000000000000000000001";
+  const requirement = build402Body(
+    payTo,
+    DEFAULT_PRICES.research_web,
+    "HERD researcher · research.web skill",
+  );
+
+  const header = c.req.header("x-payment");
+  if (!header) {
+    c.header("X-PAYMENT-REQUIRED", "1");
+    return c.json(requirement, 402);
+  }
+
+  const verify = await verifyPayment(mode, header, requirement);
+  if (!verify.ok) {
+    console.warn(`[researcher] payment rejected: ${verify.error}`);
+    return c.json(
+      { error: "payment_verification_failed", code: "INVALID_PAYMENT", details: verify.error },
+      402,
+    );
+  }
+
   const parsed = WorkBodySchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) {
-    return c.json({ error: "invalid_spec", details: parsed.error.flatten() }, 400);
+    return c.json({ error: "invalid_spec", code: "BAD_SPEC", details: parsed.error.flatten() }, 400);
   }
+
+  console.log(
+    `[researcher] paid work tx=${verify.settlement.txHash} topic="${parsed.data.spec.topic}"`,
+  );
   const artifact = await performResearch(parsed.data.spec);
+  c.header("X-PAYMENT-RESPONSE", encodeSettlementHeader(verify.settlement, requirement.network));
   return c.json({ artifact });
 });
 
