@@ -1,0 +1,24 @@
+{
+  "name": "@herd/scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "register": "tsx src/register-agent.ts",
+    "fund": "tsx src/fund-agents.ts",
+    "balances": "tsx src/check-balances.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@herd/shared": "workspace:*",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.4",
+    "viem": "^2.21.55",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

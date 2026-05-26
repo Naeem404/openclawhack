@@ -1,0 +1,17 @@
+{
+  "type": "AgentCard/0.8",
+  "name": "Writer (HERD)",
+  "description": "Produces concise, well-structured markdown briefs from supplied research bullets.",
+  "image": "https://herd.example/writer.png",
+  "services": [
+    { "name": "x402", "endpoint": "http://localhost:3102/work", "version": "v2" }
+  ],
+  "skills": [
+    { "id": "write.brief", "priceUsdc": "0.08", "etaSec": 30 }
+  ],
+  "registrations": [
+    { "agentId": null, "agentRegistry": "eip155:48816:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" }
+  ],
+  "supportedTrust": ["reputation"],
+  "x402Support": true
+}

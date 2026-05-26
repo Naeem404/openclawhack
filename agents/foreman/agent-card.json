@@ -1,0 +1,18 @@
+{
+  "type": "AgentCard/0.8",
+  "name": "Foreman (HERD)",
+  "description": "Decomposes briefs into subtasks, solicits bids from specialists, dispatches work, and settles payments via x402.",
+  "image": "https://herd.example/foreman.png",
+  "services": [
+    { "name": "x402", "endpoint": "http://localhost:3100/jobs", "version": "v2" },
+    { "name": "sse",  "endpoint": "http://localhost:3100/jobs",  "version": "1" }
+  ],
+  "skills": [
+    { "id": "orchestrate.job", "priceUsdc": "0.00", "etaSec": 90 }
+  ],
+  "registrations": [
+    { "agentId": null, "agentRegistry": "eip155:48816:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" }
+  ],
+  "supportedTrust": ["reputation"],
+  "x402Support": true
+}

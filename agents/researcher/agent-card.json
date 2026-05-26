@@ -1,0 +1,17 @@
+{
+  "type": "AgentCard/0.8",
+  "name": "Researcher (HERD)",
+  "description": "Performs structured web research and returns sourced bullet points.",
+  "image": "https://herd.example/researcher.png",
+  "services": [
+    { "name": "x402", "endpoint": "http://localhost:3101/work", "version": "v2" }
+  ],
+  "skills": [
+    { "id": "research.web", "priceUsdc": "0.05", "etaSec": 30 }
+  ],
+  "registrations": [
+    { "agentId": null, "agentRegistry": "eip155:48816:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" }
+  ],
+  "supportedTrust": ["reputation"],
+  "x402Support": true
+}
