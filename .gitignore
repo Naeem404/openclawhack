@@ -22,6 +22,13 @@ out/
 .cache/
 *.tsbuildinfo
 
+# --- hardhat ---
+artifacts/
+cache/
+typechain-types/
+deployments/*.json
+!deployments/.gitkeep
+
 # --- editor / OS ---
 .DS_Store
 Thumbs.db

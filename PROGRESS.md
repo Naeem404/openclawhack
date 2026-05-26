@@ -1,4 +1,12 @@
-# HERD — Build Progress Log
+# PaidProof — Build Progress Log
+
+> Project pivoted on 2026-05-26 from HERD (multi-agent marketplace) to PaidProof
+> (AI-verified freelance escrow). Old HERD log preserved below for the audit
+> trail; PaidProof entries start at the **Pivot Checkpoint** section.
+
+---
+
+## HERD (initial scaffold — pre-pivot)
 
 > One line per packet completed. Format: `YYYY-MM-DD HH:MM  P0X  STATUS  short note`.
 > Append, do not edit history.
@@ -69,9 +77,55 @@ P00 ✅ → P01 ⏳ (x402-hono wire-up) → P03 ⏳ (registration end-to-end liv
 - Total spend reported: 0.13 USDC (0.05 researcher + 0.08 writer).
 - `pnpm -r typecheck` is green across all 6 TS workspaces.
 
-**To enable real chain:**
+**To enable real chain (HERD-era):**
 1. Add `OPENAI_API_KEY` to `.env`.
 2. Add `FOREMAN_PRIVATE_KEY`, `RESEARCHER_PRIVATE_KEY`, `WRITER_PRIVATE_KEY` (funded with BTC + USDC on testnet3).
 3. Set `X402_MODE=local`.
 4. `pnpm register --all` to populate `*_AGENT_ID` and `*_WALLET_ADDRESS`.
 5. Re-run `pnpm.cmd dev` — every payment is now a real USDC transfer, every feedback is a real Reputation Registry tx.
+
+---
+
+## Pivot Checkpoint — PaidProof (2026-05-26 ~15:00)
+
+The repo now executes the **PaidProof** idea: AI-verified freelance escrow.
+HERD's multi-agent infrastructure is preserved and rebranded:
+
+| HERD (was)          | PaidProof (now)                                |
+|---------------------|------------------------------------------------|
+| `foreman`           | **Lead Verifier** (signs Escrow.submitVerdict) |
+| `researcher`        | **FileSpec** (file type / dim / size)          |
+| `writer`            | **ColorVision** (brand color match)            |
+| (new)               | **AestheticJudge** (GPT-4o vision)             |
+| external ERC-8004   | local **AgentRegistry.sol**                    |
+| no escrow           | **Escrow.sol** (fund / deliver / submitVerdict)|
+
+2026-05-26 14:35  pivot  Resolved package.json merge conflict (HERD TS workspaces + PaidProof hardhat scripts).
+2026-05-26 14:40  pivot  Root deps installed: hardhat 2.22, concurrently, ethers, dotenv, rimraf.
+2026-05-26 14:42  pivot  `shared/src/constants.ts` rewritten: SKILLS now verify.* family; added GOAT_MAINNET + HARDHAT_LOCAL chain specs, PAIDPROOF contract addrs, ESCROW_STATUS + AGENT_ROLES enums, DEFAULT_PRICES for the 3 specialists (0.02/0.03/0.05 USDC).
+2026-05-26 14:45  pivot  `shared/src/types.ts` rewritten: Criterion (filespec | colorvision | aesthetic discriminated union), Verdict, AggregateVerdict, EscrowJob, full SwarmEvent rebuild (escrow.* + verdict.received events).
+2026-05-26 14:48  pivot  `shared/src/abi.ts` rewritten: AGENT_REGISTRY_ABI + ESCROW_ABI added (mirror contracts/AgentRegistry.sol + Escrow.sol).
+2026-05-26 14:50  pivot  `.env.example` rewritten for PaidProof env vars (CHAIN_TARGET, PAIDPROOF_*_ADDRESS, FOREMAN/CLIENT/FREELANCER keys, all 4 agent IDs).
+2026-05-26 14:55  pivot  Lead Verifier (foreman) rewritten end-to-end: decompose.ts maps criteria→subtasks; dispatch.ts static-routes by skill; release.ts signs Escrow.submitVerdict; run.ts uses paidPost + submitVerdict + reputation flow; wallet.ts multi-chain (localhost/testnet3/mainnet) + escrow/registry/usdc address helpers; feedback.ts calls AgentRegistry.recordOutcome.
+2026-05-26 15:00  pivot  FileSpec specialist (researcher) rewritten: deterministic PNG/JPEG header parsing (no native deps), data: + http(s) URL fetch, MIME magic-byte detection, returns Verdict.
+2026-05-26 15:02  pivot  ColorVision specialist (writer) rewritten: GPT-4o vision color audit with deterministic fallback when no OPENAI_API_KEY.
+2026-05-26 15:05  pivot  AestheticJudge agent CREATED (agents/aesthetic/): package + tsconfig + agent-card + index + skill (multimodal vision verdict with red-flag detection).
+2026-05-26 15:08  pivot  Dashboard rebuilt as split-screen demo: page.tsx Client | Verifier | Freelancer columns, ClientPanel (Fund Escrow), FreelancerPanel (file drop + sample logo generator), VerifierPanel (4 agent cards live), SwarmTimeline updated for all new event types, TxToast tonal variants.
+2026-05-26 15:12  pivot  New API routes: /api/escrow/fund + /api/escrow/deliver (mock-safe stubs returning synthesised tx hashes).
+2026-05-26 15:15  pivot  Removed obsolete JobForm.tsx + AgentCard.tsx (replaced by the three new panel components).
+2026-05-26 15:18  pivot  Typechecks green: shared, agents/foreman, agents/researcher, agents/writer, agents/aesthetic, apps/dashboard.
+
+**Runtime status (mock mode, zero on-chain):**
+- `npm run dev` boots verifier:3100, filespec:3101, colorvision:3102, aesthetic:3103, dashboard:3000.
+- POST /api/escrow/fund returns `{ escrowJobId, txHash }` (synth).
+- Drop a PNG in the FreelancerPanel → POST /api/jobs → Lead Verifier dispatches 3 paid specialists → aggregate verdict → mock `Escrow.submitVerdict` → `escrow.released` event with synth tx hash.
+
+**To enable real chain (PaidProof):**
+1. `npm run node:local` (terminal 1) — boots Hardhat node + auto-mines.
+2. `npm run compile && npm run deploy:local` — writes `deployments/localhost.json` with `registry`, `escrow`, `usdc`.
+3. `npm run register:local` — registers Lead Verifier, FileSpec, ColorVision, AestheticJudge, plus demo client + freelancer; writes `deployments/agents.json`.
+4. Copy the relevant fields from `deployments/agents.json` into `.env` (`FOREMAN_PRIVATE_KEY`, `RESEARCHER_PRIVATE_KEY`, …, `PAIDPROOF_ESCROW_ADDRESS`, `PAIDPROOF_REGISTRY_ADDRESS`, `PAIDPROOF_USDC_ADDRESS`).
+5. Set `CHAIN_TARGET=localhost` and `X402_MODE=local`.
+6. `npm run dev` (terminal 2) — every payment is a real Hardhat tx; escrow.submitVerdict actually releases USDC to the freelancer.
+
+For GOAT Testnet3, swap `:local` for `:goat` in steps 2-3 and set `CHAIN_TARGET=goat-testnet3`.

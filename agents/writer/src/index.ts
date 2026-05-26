@@ -1,12 +1,11 @@
 /**
- * Writer Agent — specialist server.
- * Implements packet P02.
+ * ColorVision Agent — PaidProof specialist server.
  *
  * Endpoints:
  *   GET  /                 → agent card JSON
- *   GET  /identity         → { agentId, address, network }
- *   GET  /bid?spec=…       → quote a price
- *   POST /work             → x402-gated; on payment, writes a markdown brief
+ *   GET  /identity         → { agentId, address, network, skill }
+ *   GET  /bid?spec=…       → quote a price for a verify.colorvision call
+ *   POST /work             → x402-gated; on payment, returns a signed Verdict
  */
 import "@herd/shared/env";
 import { Hono } from "hono";
@@ -16,14 +15,14 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { PORTS, SKILLS, DEFAULT_PRICES } from "@herd/shared/constants";
-import { type Bid } from "@herd/shared/types";
+import { ColorVisionCriterionSchema, type Bid } from "@herd/shared/types";
 import {
   build402Body,
   verifyPayment,
   encodeSettlementHeader,
   getX402Mode,
 } from "@herd/shared/x402";
-import { writeBrief } from "./skill.js";
+import { checkColorVision } from "./skill.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const card = JSON.parse(readFileSync(join(__dirname, "..", "agent-card.json"), "utf-8"));
@@ -36,8 +35,9 @@ app.get("/identity", (c) =>
   c.json({
     agentId: process.env.WRITER_AGENT_ID ?? null,
     address: process.env.WRITER_WALLET_ADDRESS ?? null,
-    network: "goat-testnet3",
-    skill: SKILLS.WRITE_BRIEF,
+    role: "specialist",
+    network: process.env.CHAIN_TARGET ?? "localhost",
+    skill: SKILLS.VERIFY_COLORVISION,
   }),
 );
 
@@ -46,18 +46,19 @@ app.get("/bid", (c) => {
     agentId: process.env.WRITER_AGENT_ID ?? "0",
     agentAddress: (process.env.WRITER_WALLET_ADDRESS || "0x0000000000000000000000000000000000000002") as `0x${string}`,
     endpoint: `http://localhost:${PORTS.writer}`,
-    skill: SKILLS.WRITE_BRIEF,
-    priceUsdc: "0.08",
-    etaSec: 30,
+    skill: SKILLS.VERIFY_COLORVISION,
+    priceUsdc: "0.03",
+    etaSec: 20,
   };
   return c.json(bid);
 });
 
 const WorkBodySchema = z.object({
   spec: z.object({
-    topic: z.string().min(3),
-    targetWords: z.number().int().min(50).max(2000).default(300),
-    _inputs: z.record(z.unknown()).optional(),
+    criterion: ColorVisionCriterionSchema,
+    deliverableUrl: z.string().min(5),
+    deliverableHash: z.string().optional(),
+    escrowJobId: z.string().optional(),
   }),
 });
 
@@ -70,8 +71,8 @@ app.post("/work", async (c) => {
   const payTo = envPayTo ?? "0x0000000000000000000000000000000000000002";
   const requirement = build402Body(
     payTo,
-    DEFAULT_PRICES.write_brief,
-    "HERD writer · write.brief skill",
+    DEFAULT_PRICES.verify_colorvision,
+    "PaidProof ColorVision · verify.colorvision skill",
   );
 
   const header = c.req.header("x-payment");
@@ -82,7 +83,7 @@ app.post("/work", async (c) => {
 
   const verify = await verifyPayment(mode, header, requirement);
   if (!verify.ok) {
-    console.warn(`[writer] payment rejected: ${verify.error}`);
+    console.warn(`[colorvision] payment rejected: ${verify.error}`);
     return c.json(
       { error: "payment_verification_failed", code: "INVALID_PAYMENT", details: verify.error },
       402,
@@ -95,13 +96,13 @@ app.post("/work", async (c) => {
   }
 
   console.log(
-    `[writer] paid work tx=${verify.settlement.txHash} topic="${parsed.data.spec.topic}"`,
+    `[colorvision] paid work tx=${verify.settlement.txHash} colors=${parsed.data.spec.criterion.brandColors.join(",")}`,
   );
-  const artifact = await writeBrief(parsed.data.spec);
+  const verdict = await checkColorVision(parsed.data.spec);
   c.header("X-PAYMENT-RESPONSE", encodeSettlementHeader(verify.settlement, requirement.network));
-  return c.json({ artifact });
+  return c.json({ verdict });
 });
 
 const port = PORTS.writer;
 serve({ fetch: app.fetch, port });
-console.log(`[writer] listening on http://localhost:${port}`);
+console.log(`[colorvision] listening on http://localhost:${port}`);

@@ -1,13 +1,13 @@
 /**
- * Foreman Agent — orchestrator entry point.
- * Implements packets P04, P05, P06, P08 from AGENT_DELEGATION.md.
+ * Lead Verifier — orchestrator entry point.
  *
  * Endpoints:
- *   GET  /                     → agent card
- *   GET  /identity             → { agentId, address, network }
- *   POST /jobs                 → start a job, returns { jobId } immediately
- *   GET  /jobs/:id/events      → SSE stream of SwarmEvents for the job
- *   GET  /jobs/:id             → final JobResult (once completed)
+ *   GET  /                     → agent card (PaidProof Lead Verifier)
+ *   GET  /identity             → { agentId, address, network, role }
+ *   POST /jobs                 → submit a verification job (criteria + deliverable URL)
+ *   GET  /jobs/:id/events      → SSE stream of SwarmEvents
+ *   GET  /jobs/:id             → final JobResult once completed
+ *   GET  /escrow               → escrow + registry addresses for dashboard
  */
 import "@herd/shared/env";
 import { Hono } from "hono";
@@ -35,7 +35,19 @@ app.get("/identity", (c) =>
   c.json({
     agentId: process.env.FOREMAN_AGENT_ID ?? null,
     address: process.env.FOREMAN_WALLET_ADDRESS ?? null,
-    network: "goat-testnet3",
+    role: "lead-verifier",
+    network: process.env.CHAIN_TARGET ?? "localhost",
+  }),
+);
+
+app.get("/escrow", (c) =>
+  c.json({
+    network: process.env.CHAIN_TARGET ?? "localhost",
+    registry: process.env.PAIDPROOF_REGISTRY_ADDRESS ?? null,
+    escrow: process.env.PAIDPROOF_ESCROW_ADDRESS ?? null,
+    usdc: process.env.PAIDPROOF_USDC_ADDRESS ?? null,
+    verifierAgentId: process.env.FOREMAN_AGENT_ID ?? null,
+    verifierAddress: process.env.FOREMAN_WALLET_ADDRESS ?? null,
   }),
 );
 

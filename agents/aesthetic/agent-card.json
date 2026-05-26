@@ -1,0 +1,17 @@
+{
+  "type": "AgentCard/0.8",
+  "name": "AestheticJudge (PaidProof)",
+  "description": "Multimodal vision specialist. Decides whether a delivered image actually looks like the agreed thing (a real logo, mockup, illustration, etc.) and is not a placeholder, screenshot, or AI-slop.",
+  "image": "https://paidproof.app/agents/aesthetic.png",
+  "services": [
+    { "name": "x402", "endpoint": "http://localhost:3103/work", "version": "v2" }
+  ],
+  "skills": [
+    { "id": "verify.aesthetic", "priceUsdc": "0.05", "etaSec": 30 }
+  ],
+  "registrations": [
+    { "agentId": null, "agentRegistry": "paidproof:AgentRegistry" }
+  ],
+  "supportedTrust": ["reputation"],
+  "x402Support": true
+}

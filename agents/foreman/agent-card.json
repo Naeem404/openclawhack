@@ -1,17 +1,17 @@
 {
   "type": "AgentCard/0.8",
-  "name": "Foreman (HERD)",
-  "description": "Decomposes briefs into subtasks, solicits bids from specialists, dispatches work, and settles payments via x402.",
-  "image": "https://herd.example/foreman.png",
+  "name": "Lead Verifier (PaidProof)",
+  "description": "Receives deliverables, dispatches specialist verifiers via x402, aggregates verdicts, and signs the escrow release transaction. The only wallet authorised to release escrow funds.",
+  "image": "https://paidproof.app/agents/lead-verifier.png",
   "services": [
-    { "name": "x402", "endpoint": "http://localhost:3100/jobs", "version": "v2" },
-    { "name": "sse",  "endpoint": "http://localhost:3100/jobs",  "version": "1" }
+    { "name": "http", "endpoint": "http://localhost:3100/jobs", "version": "v2" },
+    { "name": "sse",  "endpoint": "http://localhost:3100/jobs/:id/events", "version": "1" }
   ],
   "skills": [
-    { "id": "orchestrate.job", "priceUsdc": "0.00", "etaSec": 90 }
+    { "id": "verify.lead", "priceUsdc": "0.00", "etaSec": 60 }
   ],
   "registrations": [
-    { "agentId": null, "agentRegistry": "eip155:48816:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" }
+    { "agentId": null, "agentRegistry": "paidproof:AgentRegistry" }
   ],
   "supportedTrust": ["reputation"],
   "x402Support": true

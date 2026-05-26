@@ -1,16 +1,16 @@
 {
   "type": "AgentCard/0.8",
-  "name": "Researcher (HERD)",
-  "description": "Performs structured web research and returns sourced bullet points.",
-  "image": "https://herd.example/researcher.png",
+  "name": "FileSpec (PaidProof)",
+  "description": "Verifies that a delivered file matches the agreed MIME type, dimensions, and byte-size envelope. Returns a signed verdict.",
+  "image": "https://paidproof.app/agents/filespec.png",
   "services": [
     { "name": "x402", "endpoint": "http://localhost:3101/work", "version": "v2" }
   ],
   "skills": [
-    { "id": "research.web", "priceUsdc": "0.05", "etaSec": 30 }
+    { "id": "verify.filespec", "priceUsdc": "0.02", "etaSec": 10 }
   ],
   "registrations": [
-    { "agentId": null, "agentRegistry": "eip155:48816:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" }
+    { "agentId": null, "agentRegistry": "paidproof:AgentRegistry" }
   ],
   "supportedTrust": ["reputation"],
   "x402Support": true

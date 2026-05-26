@@ -1,8 +1,39 @@
-# HERD — Agent Delegation Plan
+# PaidProof — Agent Delegation Plan
 
 > Procedural task packets for sub-agents. Each packet is self-contained. Open one, complete it, mark it done.
 > The Mastermind owns `PROJECT_BLUEPRINT.md`. Sub-agents own these packets.
 > Read `PROJECT_BLUEPRINT.md` § 4 (Architecture) and § 6 (Repo Layout) **before starting any packet**.
+
+---
+
+## PaidProof Pivot (2026-05-26) — Packet Status
+
+The HERD scaffolding has been pivoted to PaidProof in-place. The legacy HERD
+packets (P00–P15) below are kept for the audit trail. The PaidProof-relevant
+work is summarised here:
+
+| PP-ID | Title                                                   | Status | Where        |
+|-------|---------------------------------------------------------|--------|--------------|
+| PP00  | Shared package (constants, types, ABIs incl. Escrow)    | DONE   | `shared/src/*` |
+| PP01  | `contracts/Escrow.sol` + `AgentRegistry.sol` + `MockUSDC.sol` | DONE   | `contracts/`  |
+| PP02  | Hardhat config + `scripts/deploy.js` + `register-agents.js` | DONE   | root, `scripts/` |
+| PP03  | Lead Verifier (`agents/foreman`): decompose criteria → subtasks, dispatch, paidPost, submitVerdict, AgentRegistry feedback | DONE | `agents/foreman/src/*` |
+| PP04  | FileSpec specialist (`agents/researcher`): PNG/JPEG header parsing, returns Verdict | DONE | `agents/researcher/src/*` |
+| PP05  | ColorVision specialist (`agents/writer`): GPT-4o vision color audit | DONE | `agents/writer/src/*` |
+| PP06  | AestheticJudge specialist (`agents/aesthetic`): multimodal vision verdict | DONE | `agents/aesthetic/*` |
+| PP07  | Dashboard split-screen demo (Client \| Verifier \| Freelancer) + tx toasts + timeline | DONE | `apps/dashboard/src/*` |
+| PP08  | `/api/escrow/fund` + `/api/escrow/deliver` (mock-safe stubs) | DONE | `apps/dashboard/src/app/api/escrow/*` |
+| PP09  | Live chain wiring — `npm run node:local` + `deploy:local` + `register:local` end-to-end | PENDING | manual: see PROGRESS.md |
+| PP10  | GOAT Testnet3 deploy + register pass                    | PENDING | manual       |
+| PP11  | Demo polish — animations + sound effects + backup video | PENDING | dashboard    |
+| PP12  | E2E live run on testnet3 ≥3× green                      | PENDING | manual       |
+
+**Critical path for the remaining day:**
+PP09 → PP10 → PP12 → PP11 (polish only after the live run is green).
+
+---
+
+## Legacy HERD packets (pre-pivot)
 
 ---
 

@@ -1,26 +1,49 @@
 {
-  "name": "herd",
-  "version": "0.1.0",
+  "name": "paidproof",
+  "version": "1.0.0",
   "private": true,
-  "description": "HERD — Autonomous subcontracting swarm where AI agents hire each other on Bitcoin. Built for OpenClaw Hack Toronto 2026.",
+  "description": "PaidProof — AI verifier agents release on-chain escrow the moment work is done. Bitcoin-secured freelance settlement built for OpenClaw Hack Toronto 2026.",
   "license": "MIT",
-  "packageManager": "pnpm@9.12.0",
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "concurrently -n foreman,researcher,writer,dashboard -c yellow,cyan,magenta,green \"pnpm -F foreman dev\" \"pnpm -F researcher dev\" \"pnpm -F writer dev\" \"pnpm -F dashboard dev\"",
-    "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint",
-    "register": "pnpm -F @herd/scripts register",
-    "fund": "pnpm -F @herd/scripts fund",
-    "balances": "pnpm -F @herd/scripts balances",
-    "clean": "pnpm -r exec rimraf dist .next .turbo .cache *.tsbuildinfo"
+    "compile": "hardhat compile",
+    "node:local": "hardhat node",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:goat": "hardhat run scripts/deploy.js --network goat_testnet",
+    "deploy:goatmain": "hardhat run scripts/deploy.js --network goat",
+    "register:local": "hardhat run scripts/register-agents.js --network localhost",
+    "register:goat": "hardhat run scripts/register-agents.js --network goat_testnet",
+    "dev:foreman": "npm --prefix agents/foreman run dev",
+    "dev:researcher": "npm --prefix agents/researcher run dev",
+    "dev:writer": "npm --prefix agents/writer run dev",
+    "dev:aesthetic": "npm --prefix agents/aesthetic run dev",
+    "dev:dashboard": "npm --prefix apps/dashboard run dev",
+    "dev": "concurrently -n foreman,filespec,colorvision,aesthetic,dashboard -c yellow,cyan,magenta,blue,green \"npm run dev:foreman\" \"npm run dev:researcher\" \"npm run dev:writer\" \"npm run dev:aesthetic\" \"npm run dev:dashboard\"",
+    "build:shared": "npm --prefix shared run build",
+    "typecheck": "npm --prefix shared run typecheck && npm --prefix agents/foreman run typecheck && npm --prefix agents/researcher run typecheck && npm --prefix agents/writer run typecheck && npm --prefix agents/aesthetic run typecheck && npm --prefix apps/dashboard run typecheck",
+    "balances": "npm --prefix scripts run balances",
+    "fund": "npm --prefix scripts run fund",
+    "test": "hardhat test"
+  },
+  "keywords": [
+    "openclaw",
+    "goat-network",
+    "erc-8004",
+    "x402",
+    "ai-agents",
+    "escrow",
+    "freelance"
+  ],
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.4"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "concurrently": "^9.0.1",
+    "hardhat": "^2.22.16",
     "rimraf": "^6.0.1",
     "typescript": "^5.6.3"
   }

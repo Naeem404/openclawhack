@@ -1,116 +1,122 @@
-# HERD — Project Blueprint
+# PaidProof — Project Blueprint
 
-> *Where AI agents earn their keep.*
-> An autonomous subcontracting swarm where AI agents hire each other on Bitcoin.
+> *Work delivered. Money settled. In 30 seconds.*
+> An AI-verified freelance escrow that replaces 30-day waits and 10% middleman fees with Bitcoin-secured instant settlement.
 
 **Hackathon:** OpenClaw Hack Toronto — Tech Week 2026 (May 26, 2026)
 **Stack:** OpenClaw · ERC-8004 · x402 · GOAT Network (Bitcoin L2 / BitVM2)
-**Author / Mastermind:** Lead engineer (Cascade)
-**Status:** Blueprint v1.0 — locked. Implementation delegated per `AGENT_DELEGATION.md`.
+**Slogan:** *"The middleman was the bug."*
+**Status:** Blueprint v2.0 — pivot from HERD. Implementation delegated per `AGENT_DELEGATION.md`.
 
 ---
 
 ## 1. Vision
 
-Today's "AI agents" are isolated chatbots. They cannot **discover** each other, **trust** each other, or **pay** each other. The entire promise of the agent economy collapses without a coordination layer.
+A designer in Lagos finishes a logo for a startup in Toronto. Today: upload, wait 14 days for approval, 5 days to clear Upwork's 10% fee gauntlet and currency conversion. **63% of freelancers wait over a month to get paid.**
 
-**HERD** is that layer. It is a live marketplace where:
+**PaidProof** collapses that loop to 30 seconds:
 
-1. A **Buyer** (human or agent) posts a complex job with a budget.
-2. A **Foreman Agent** decomposes the job into typed subtasks.
-3. **Specialist Agents** (each ERC-8004 registered) bid in real time.
-4. The Foreman ranks bids by `reputation × price` and dispatches work.
-5. Every subtask delivery triggers an **x402 micro-payment** between agents.
-6. After completion, all parties post **ERC-8004 reputation feedback** — a permanent, on-chain record that affects future hireability.
-7. Buyer receives the compiled deliverable with a verifiable on-chain receipt, settled on Bitcoin via GOAT's BitVM2.
+1. **Client** deposits USDC into a Bitcoin-secured escrow on GOAT.
+2. **Freelancer** uploads the deliverable + agreed criteria.
+3. **Lead Verifier** — an OpenClaw agent with its own ERC-8004 identity and reputation history — takes the job.
+4. Lead Verifier **hires three specialist agents via x402**, paying each one a micro-fee in USDC:
+   - **FileSpec** — checks file type / dimensions / size.
+   - **ColorVision** — checks the deliverable contains the agreed brand colors.
+   - **AestheticJudge** — vision LLM check: "does this actually look like the agreed thing".
+5. Each specialist returns a **signed verdict**. Lead Verifier aggregates.
+6. If all criteria pass, Lead Verifier calls `Escrow.release()` → funds stream to the freelancer's wallet in one block.
+7. ERC-8004 reputation is updated for the freelancer, client, and every agent that judged.
 
-The result is a **self-organising labour market for software agents**, where reputation is the moat and Bitcoin is the rails.
+The result is a **Bitcoin-secured rail under the entire $400B freelance economy**, where reputation is portable, judgment is auditable, and settlement is instant.
 
 ---
 
 ## 2. Why This Wins
 
-| Criterion | HERD's edge |
+| Criterion | PaidProof's edge |
 |---|---|
-| **Unique vs existing demos** | All known reference demos (`julies-claw/goat-agent-demo`, `x402-merchant`) are **single-agent, user→agent**. HERD is the first **multi-agent, agent→agent** marketplace at this event. |
-| **Practical / monetizable** | Take a 2–5% protocol fee on every job. Direct B2B value — "agentic Upwork/Fiverr". Clear path from hackathon → seed-stage startup. |
-| **Uses every stack piece non-trivially** | OpenClaw runtimes (Foreman + Specialists) · ERC-8004 (identity + reputation + reviewer-as-agent loop) · x402 (true agent→agent, not just user→agent) · GOAT (low-fee, Bitcoin-final settlement) |
-| **Demoable in 2 minutes** | One prompt → live swarm activates → on-chain txs stream into dashboard → final deliverable + reputation update. Visceral, screen-friendly. |
-| **Bitcoin native** | Settles on Bitcoin via BitVM2 — leans into GOAT Network's positioning rather than treating it as an EVM-of-the-week. |
+| **Visceral pain** | Every judge has either been ghosted on payment or paid a freelancer late. The pain is universal. |
+| **Market size** | $400B+ global freelance economy. 70M+ workers worldwide. Top complaint: payment delays. |
+| **Demo narrative** | "Designer in Lagos delivers logo. AI verifies. $200 hits her wallet in 30 seconds — Bitcoin-secured, no middleman." Humanitarian + technical. |
+| **Uses every stack piece non-trivially** | OpenClaw runtimes (Lead Verifier + 3 specialists) · ERC-8004 (4 agent identities + portable freelancer/client reputation) · x402 (3 agent→agent micropayments per verification) · GOAT (escrow secured by Bitcoin) |
+| **Investor angle** | Wedge under Upwork's 10% take rate. Charge 1% to be the rail. Comparable exits: Deel ($12B), Wise ($11B IPO). |
 
 ---
 
 ## 3. Hackathon Alignment Matrix
 
-| Hackathon Mandate | How HERD satisfies it |
+| Hackathon Mandate | How PaidProof satisfies it |
 |---|---|
-| *"Build an AI agent that doesn't just talk but owns its identity"* | Every agent in HERD (Foreman + Specialists) holds its own ERC-8004 NFT on GOAT Testnet3 and resolves a portable `agentURI` JSON card. |
-| *"Manages its own wallet"* | Each agent process holds a dedicated EVM private key, signs its own x402 payloads (EIP-712), and pays gas in BTC on GOAT. |
-| *"Transact with other agents"* | Foreman pays Specialists via x402 401→pay→retry loop. Specialists may pay sub-Specialists recursively. |
-| *"High-value transactions with zero human oversight"* | Once the Buyer signs the initial job authorisation, the swarm operates autonomously: subcontracting, paying, validating, reporting. |
-| *"Bitcoin's 99.9% uptime + BitVM2's mathematical security"* | All settlement on GOAT Testnet3 (Bitcoin-secured zkRollup). Demo references `https://explorer.testnet3.goat.network` for every tx. |
-| *"Leverage OpenClaw"* | All agents run as OpenClaw-compatible runtimes (Node.js / `@goatnetwork/agentkit`). Foreman can be deployed as a managed ClawUp Claw. |
+| *"Build an AI agent that doesn't just talk but owns its identity"* | All 4 PaidProof agents (Lead Verifier + FileSpec + ColorVision + AestheticJudge) hold their own ERC-8004 NFTs on GOAT Testnet3 with portable reputation. Freelancers and clients also get reputation tokens. |
+| *"Manages its own wallet"* | Each agent process holds a dedicated EVM private key, signs x402 payloads, and pays GOAT gas in BTC. Lead Verifier additionally signs `Escrow.release()` transactions worth real money. |
+| *"Transact with other agents"* | Lead Verifier pays each specialist via x402 (3 settled txs per verification). All settlements visible on GOAT explorer. |
+| *"High-value transactions with zero human oversight"* | The escrow is real money. Once funded, **no human ever clicks "approve"** — the agent verifies the deliverable and signs the release. This is exactly the hackathon thesis. |
+| *"Bitcoin's 99.9% uptime + BitVM2's mathematical security"* | Escrow holds USDC on GOAT Testnet3 — Bitcoin-secured zkRollup. "No operator, no hacker, no government can pull it." Every tx links to the GOAT explorer. |
+| *"Leverage OpenClaw"* | All agents are OpenClaw-compatible Node.js runtimes. Lead Verifier deployable as a managed ClawUp Claw. Vision specialists use multimodal LLM access. |
 
 ---
 
 ## 4. Architecture
 
 ```
-                       ┌──────────────────────────┐
-                       │     Buyer (Browser)      │
-                       │  apps/dashboard (Next.js)│
-                       └──────────────┬───────────┘
-                                      │ POST /jobs  { brief, budget }
-                                      ▼
-                       ┌──────────────────────────┐
-                       │   FOREMAN AGENT          │ ─── ERC-8004 #FID
-                       │   apps/foreman (Hono)    │ ─── Wallet: 0xFOREMAN
-                       │   - decomposes brief     │
-                       │   - solicits bids        │
-                       │   - ranks by rep × price │
-                       │   - dispatches work      │
-                       │   - settles via x402     │
-                       └────┬────────────────┬────┘
-                            │                │
-              GET  /bid?spec=…              GET  /bid?spec=…
-              POST /work    (402→pay)       POST /work    (402→pay)
-                            │                │
-                            ▼                ▼
-                ┌────────────────┐  ┌────────────────┐
-                │  RESEARCHER    │  │     WRITER     │
-                │  agents/       │  │  agents/       │
-                │  researcher    │  │  writer        │
-                │  ERC-8004 #RID │  │  ERC-8004 #WID │
-                └───────┬────────┘  └───────┬────────┘
-                        │                   │
-                        └──────────┬────────┘
-                                   ▼
-                       ┌──────────────────────────┐
-                       │   GOAT Testnet3 L2       │
-                       │   - USDC transfers       │
-                       │   - ERC-8004 Identity    │
-                       │   - ERC-8004 Reputation  │
-                       └──────────────┬───────────┘
-                                      │ ZK proofs + BitVM2 challenge
-                                      ▼
-                       ┌──────────────────────────┐
-                       │   Bitcoin L1 (final)     │
-                       └──────────────────────────┘
+   ┌──────────────────┐                    ┌──────────────────┐
+   │ Client (Marcus)  │                    │ Freelancer       │
+   │ wallet: $250 ▼   │                    │ (Sarah) — $0 ▲   │
+   └────────┬─────────┘                    └────────▲─────────┘
+            │ Escrow.fund($200 USDC)                │ Escrow.release
+            ▼                                       │
+   ┌─────────────────────────────────────────────────────┐
+   │  Escrow.sol on GOAT Testnet3 (Bitcoin-secured)      │
+   │  state: {jobId, client, freelancer, amount, status} │
+   └────────┬────────────────────────────────────────────┘
+            │ release() called only by Lead Verifier
+            ▼
+   ┌─────────────────────────────────────────────────────┐
+   │  LEAD VERIFIER  (agents/foreman → reused)           │ ERC-8004 #LID
+   │  - parses criteria JSON                             │ Wallet: 0xLEAD
+   │  - dispatches 3 specialists via x402                │
+   │  - aggregates verdicts                              │
+   │  - signs Escrow.release() on full pass              │
+   └────┬───────────────┬──────────────────┬────────────┘
+        │POST /work     │POST /work        │POST /work
+        │(402 → pay)    │(402 → pay)       │(402 → pay)
+        ▼               ▼                  ▼
+   ┌──────────┐  ┌────────────────┐  ┌───────────────┐
+   │ FileSpec │  │  ColorVision   │  │ AestheticJudge│
+   │ (foreman │  │  (writer)      │  │ (NEW)         │
+   │ →reused) │  │                │  │               │
+   │ #FSID    │  │  #CVID         │  │  #AJID        │
+   │ $0.02    │  │  $0.03         │  │  $0.05        │
+   └──────────┘  └────────────────┘  └───────────────┘
+        │              │                   │
+        └──────────────┴───────────────────┘
+                       ▼
+            ┌──────────────────────────┐
+            │   GOAT Testnet3 L2       │
+            │   - Escrow USDC          │
+            │   - x402 USDC transfers  │
+            │   - ERC-8004 Identity    │
+            │   - ERC-8004 Reputation  │
+            └──────────────┬───────────┘
+                           │ BitVM2 + ZK
+                           ▼
+            ┌──────────────────────────┐
+            │   Bitcoin L1 (final)     │
+            └──────────────────────────┘
 ```
 
 ### Data flow (happy path)
 
-1. Buyer posts `{ brief, budgetUsdc }` to Foreman.
-2. Foreman LLM decomposes brief into N typed subtasks (`research`, `write`, `validate`, …).
-3. Foreman broadcasts a bid request to its registered Specialists (in MVP: static list; v2: discovery via ERC-8004 registry scan).
-4. Each Specialist replies with `{ priceUsdc, etaSec, agentId }` — signed by its wallet.
-5. Foreman picks winner per subtask using `score = reputation_decimal − k × price`.
-6. Foreman calls `POST /work` on winner → receives **HTTP 402** + payment requirements.
-7. Foreman signs an EIP-712 payment payload, retries `POST /work` with `X-PAYMENT` header.
-8. Specialist verifies signature, settles USDC on-chain (or via facilitator), executes work, returns artifact + `X-PAYMENT-RESPONSE`.
-9. Foreman assembles artifacts, returns final deliverable + receipt JSON to Buyer.
-10. Foreman calls `erc8004.give_feedback(specialistId, value, tag="herd")` for each Specialist; Buyer optionally feedbacks the Foreman.
-11. Dashboard streams every step via SSE.
+1. Client + Freelancer agree to a job. Client calls `Escrow.fund(jobId, freelancer, amount)` — USDC locked on-chain.
+2. Freelancer uploads the deliverable (PNG file + URL) and posts criteria JSON to Lead Verifier (`POST /jobs`).
+3. Lead Verifier parses criteria, derives one subtask per criterion bucket (`verify.filespec`, `verify.colorvision`, `verify.aesthetic`).
+4. For each subtask: Lead Verifier calls `POST /work` on the right specialist → receives HTTP 402 + payment requirements.
+5. Lead Verifier signs a USDC `transfer` (x402 v2 `exact` scheme), retries with `X-PAYMENT` header.
+6. Specialist verifies the payment tx on-chain, runs its check, returns `{ verdict, confidence, reasoning }` + `X-PAYMENT-RESPONSE`.
+7. Lead Verifier aggregates: if **all** specialists return `pass`, it calls `Escrow.release(jobId)`. Funds stream to freelancer.
+8. If **any** specialist returns `fail`, escrow stays locked and the dashboard surfaces the dispute reason. (Stretch: auto-call a higher-rep second-opinion agent.)
+9. Lead Verifier calls `ReputationRegistry.giveFeedback` for each specialist (judgment accuracy) and for the freelancer (delivery quality).
+10. Dashboard streams every step via SSE — client wallet, freelancer wallet, escrow balance, x402 txs, final release all visible in real time.
 
 ---
 
@@ -120,13 +126,12 @@ The result is a **self-organising labour market for software agents**, where rep
 |---|---|---|---|
 | Runtime | Node.js | 20.x LTS | Required by ClawUp + AgentKit |
 | Language | TypeScript | ^5.4 | Type safety across agents |
-| Web framework | Hono | ^4.6 | First-class `x402-hono` middleware |
-| EVM client | viem | ^2.21 | Typesafe, modern; pairs with x402 |
-| Legacy EVM (registration script) | ethers | ^6.13 | Matches `julies-claw/goat-agent-demo` patterns |
-| Agent SDK | `@goatnetwork/agentkit` | latest | Wallet, ERC-8004, x402 actions |
-| x402 middleware | `x402-hono` | latest | HTTP 402 server side |
-| x402 client | `@x402/fetch` | latest | Agent-to-agent payment client |
-| LLM | OpenAI GPT-4o-mini | API 2024+ | Cheap, fast, function-calling capable. Fallback to Anthropic Claude Haiku. |
+| Smart contracts | Solidity | ^0.8.24 | `Escrow.sol` deployed on GOAT testnet3 |
+| Web framework | Hono | ^4.6 | Lean HTTP + x402 friendly |
+| EVM client | viem | ^2.21 | Typesafe payments + contract writes |
+| LLM (text) | OpenAI GPT-4o-mini | API 2024+ | Cheap, fast, JSON-mode. |
+| LLM (vision) | OpenAI GPT-4o | API 2024+ | Multimodal for AestheticJudge specialist. |
+| Image probing | `image-size` | ^1.1 | Tiny lib to extract PNG dimensions without ImageMagick. |
 | Frontend | Next.js (App Router) | ^14.2 | Fast scaffold, SSE-friendly |
 | Styling | Tailwind CSS | ^3.4 | Speed |
 | UI primitives | lucide-react icons | latest | Clean iconography |
@@ -156,63 +161,70 @@ The result is a **self-organising labour market for software agents**, where rep
 openclawhack/
 ├── PROJECT_BLUEPRINT.md      ← this file (master design)
 ├── AGENT_DELEGATION.md       ← procedural task packets for sub-agents
-├── PROGRESS.md               ← running log (updated per session)
-├── README.md                 ← public pitch + 60-second run
-├── .env.example              ← all env vars in one place
-├── .gitignore
-├── package.json              ← root workspaces + dev scripts
-├── tsconfig.base.json        ← shared TS config
+├── PROGRESS.md               ← running log
+├── README.md
+├── .env.example
+├── package.json
+├── tsconfig.base.json
 │
-├── shared/                   ← shared types & constants
-│   ├── package.json
-│   ├── src/
-│   │   ├── constants.ts      ← chain IDs, contract addrs
-│   │   ├── types.ts          ← Job, Bid, Artifact, FeedbackTag …
-│   │   └── abi.ts            ← ERC-8004 + USDC minimal ABIs
+├── contracts/                ← NEW: Solidity sources
+│   └── Escrow.sol            ← fund / release / refund / dispute
+│
+├── shared/                   ← cross-package code
+│   └── src/
+│       ├── constants.ts      ← chain IDs, contract addrs, SKILLS, prices
+│       ├── types.ts          ← Criterion, Verdict, EscrowJob, SwarmEvent
+│       ├── abi.ts            ← ERC20 + ERC-8004 + Escrow ABIs
+│       ├── x402.ts           ← build402Body, verifyPayment, encodeSettlement
+│       └── env.ts            ← repo-root .env loader
 │
 ├── agents/
-│   ├── foreman/              ← orchestrator agent
-│   │   ├── package.json
-│   │   ├── src/
-│   │   │   ├── index.ts      ← Hono server + SSE stream
-│   │   │   ├── decompose.ts  ← LLM brief → subtask plan
-│   │   │   ├── dispatch.ts   ← bid solicitation + ranking
-│   │   │   ├── pay.ts        ← x402 client wrapper
-│   │   │   └── reputation.ts ← post feedback after job
+│   ├── foreman/              ← = LEAD VERIFIER (orchestrator)
+│   │   └── src/
+│   │       ├── index.ts      ← Hono server + SSE + /jobs
+│   │       ├── decompose.ts  ← criteria → subtask plan
+│   │       ├── dispatch.ts   ← specialist resolution
+│   │       ├── pay.ts        ← x402 client (paidPost)
+│   │       ├── release.ts    ← NEW: signs Escrow.release()
+│   │       ├── run.ts        ← verification job runner
+│   │       ├── feedback.ts   ← ERC-8004 reputation writes
+│   │       ├── sse.ts
+│   │       └── wallet.ts
 │   │
-│   ├── researcher/           ← specialist #1
-│   │   ├── package.json
-│   │   ├── src/
-│   │   │   ├── index.ts      ← Hono + x402-hono server
-│   │   │   ├── card.ts       ← agent card / registration JSON
-│   │   │   └── skill.ts      ← LLM-powered research task
+│   ├── researcher/           ← = FILESPEC specialist
+│   │   └── src/
+│   │       ├── index.ts      ← x402-gated /work
+│   │       └── skill.ts      ← PNG / dimension / size check
 │   │
-│   └── writer/               ← specialist #2
-│       ├── package.json
-│       ├── src/
-│       │   ├── index.ts
-│       │   ├── card.ts
-│       │   └── skill.ts
+│   ├── writer/               ← = COLORVISION specialist
+│   │   └── src/
+│   │       ├── index.ts
+│   │       └── skill.ts      ← extract dominant colors, match brand hexes
+│   │
+│   └── aesthetic/            ← NEW: AESTHETICJUDGE specialist
+│       └── src/
+│           ├── index.ts
+│           └── skill.ts      ← GPT-4o vision: "is this a real logo"
 │
 ├── apps/
-│   └── dashboard/            ← Next.js demo UI
-│       ├── package.json
-│       ├── next.config.mjs
-│       ├── tailwind.config.ts
+│   └── dashboard/            ← Next.js split-screen demo UI
 │       └── src/
 │           ├── app/
-│           │   ├── layout.tsx
-│           │   ├── page.tsx           ← main demo screen
-│           │   └── api/stream/route.ts ← SSE proxy to Foreman
+│           │   ├── page.tsx           ← Client | Verifier | Freelancer
+│           │   └── api/
+│           │       ├── jobs/route.ts
+│           │       ├── stream/[id]/route.ts
+│           │       └── agents/[name]/route.ts
 │           └── components/
-│               ├── JobForm.tsx
-│               ├── SwarmTimeline.tsx
-│               ├── AgentCard.tsx
+│               ├── ClientPanel.tsx     ← fund escrow button
+│               ├── FreelancerPanel.tsx ← upload deliverable
+│               ├── VerifierPanel.tsx   ← live verdict cards
 │               └── TxToast.tsx
 │
 └── scripts/
-    ├── register-agent.ts     ← one-shot ERC-8004 registration
-    ├── fund-agents.ts        ← top up agent wallets from a master key
+    ├── deploy-escrow.ts      ← NEW: deploy Escrow.sol to GOAT testnet3
+    ├── register-agent.ts     ← ERC-8004 registration (all 4 agents)
+    ├── fund-agents.ts
     └── check-balances.ts
 ```
 
@@ -220,39 +232,116 @@ openclawhack/
 
 ## 7. Smart Contract Surface
 
-**MVP deploys NO custom contracts.** It reuses:
+PaidProof deploys **ONE custom contract** (`contracts/Escrow.sol`) plus reuses GOAT's existing ERC-8004 + USDC.
 
+### `Escrow.sol` — the heart of the demo
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+interface IERC20 {
+    function transferFrom(address,address,uint256) external returns (bool);
+    function transfer(address,uint256) external returns (bool);
+}
+
+contract Escrow {
+    enum Status { None, Funded, Released, Refunded, Disputed }
+
+    struct Job {
+        address client;
+        address freelancer;
+        uint256 amount;
+        Status status;
+    }
+
+    IERC20  public immutable token;       // USDC on GOAT
+    address public immutable verifier;    // Lead Verifier wallet (only authorised releaser)
+
+    mapping(bytes32 => Job) public jobs;
+
+    event Funded(bytes32 indexed jobId, address client, address freelancer, uint256 amount);
+    event Released(bytes32 indexed jobId, address freelancer, uint256 amount);
+    event Refunded(bytes32 indexed jobId, address client, uint256 amount);
+    event Disputed(bytes32 indexed jobId);
+
+    constructor(address _token, address _verifier) {
+        token = IERC20(_token);
+        verifier = _verifier;
+    }
+
+    function fund(bytes32 jobId, address freelancer, uint256 amount) external {
+        require(jobs[jobId].status == Status.None, "job exists");
+        require(token.transferFrom(msg.sender, address(this), amount), "xfer fail");
+        jobs[jobId] = Job(msg.sender, freelancer, amount, Status.Funded);
+        emit Funded(jobId, msg.sender, freelancer, amount);
+    }
+
+    function release(bytes32 jobId) external {
+        require(msg.sender == verifier, "not verifier");
+        Job storage j = jobs[jobId];
+        require(j.status == Status.Funded, "not funded");
+        j.status = Status.Released;
+        require(token.transfer(j.freelancer, j.amount), "xfer fail");
+        emit Released(jobId, j.freelancer, j.amount);
+    }
+
+    function refund(bytes32 jobId) external {
+        require(msg.sender == verifier, "not verifier");
+        Job storage j = jobs[jobId];
+        require(j.status == Status.Funded || j.status == Status.Disputed, "bad status");
+        j.status = Status.Refunded;
+        require(token.transfer(j.client, j.amount), "xfer fail");
+        emit Refunded(jobId, j.client, j.amount);
+    }
+
+    function dispute(bytes32 jobId) external {
+        Job storage j = jobs[jobId];
+        require(msg.sender == j.client || msg.sender == j.freelancer, "not party");
+        require(j.status == Status.Funded, "not funded");
+        j.status = Status.Disputed;
+        emit Disputed(jobId);
+    }
+}
+```
+
+**Why this design wins the demo:**
+
+- Single "authorised releaser" (Lead Verifier wallet) — makes the autonomous-agent narrative concrete.
+- No multi-sig, no oracle dance — the agent's verdict IS the release authority.
+- Refund path lets us recover funds in the failure demo without committing to a full DAO arbiter.
+- Dispute flag is the hook for the v2 second-opinion agent (mentioned in pitch, not required for MVP).
+
+### Reused on GOAT Testnet3
 - ERC-8004 **IdentityRegistry** at `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`
 - ERC-8004 **ReputationRegistry** at `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63`
 - USDC at `0x29d1ee93e9ecf6e50f309f498e40a6b42d352fa1`
-
-**Why no custom contract for MVP:**
-- Time: 6h 45min total hacking budget. Solidity work eats 90+ minutes.
-- Risk: deploy mistakes are unrecoverable mid-demo.
-- Sufficient: x402 + ERC-8004 already give us identity, payment, reputation. Coordination logic lives in the Foreman.
-
-**Post-MVP (stretch goal, only if >2 hours remain at 4:00 PM):**
-- `JobEscrow.sol` — Buyer deposits budget; Foreman releases per-subtask; refund if SLA missed.
-- `BidBoard.sol` — on-chain task announcement so non-registered Specialists can discover work.
 
 ---
 
 ## 8. Agent Identity & Registration
 
-Each agent has its own `agent-card.json`, hosted by its own server at `GET /`. Example:
+Four agents, four ERC-8004 NFTs. Each hosts its own `agent-card.json` at `GET /`:
+
+| Agent | Skill ID | Price (USDC) | Folder |
+|---|---|---|---|
+| Lead Verifier | `verify.lead` | n/a (orchestrator) | `agents/foreman` |
+| FileSpec | `verify.filespec` | 0.02 | `agents/researcher` |
+| ColorVision | `verify.colorvision` | 0.03 | `agents/writer` |
+| AestheticJudge | `verify.aesthetic` | 0.05 | `agents/aesthetic` |
+
+Example agent card (FileSpec):
 
 ```json
 {
   "type": "AgentCard/0.8",
-  "name": "Researcher (HERD)",
-  "description": "Performs structured web research and returns sourced bullet points.",
-  "image": "https://herd.example/researcher.png",
+  "name": "FileSpec (PaidProof)",
+  "description": "Verifies file type, dimensions, and size against deliverable criteria.",
   "services": [
-    { "name": "x402", "endpoint": "http://localhost:3101/work", "version": "v2" },
-    { "name": "MCP", "endpoint": "http://localhost:3101/mcp", "version": "1" }
+    { "name": "x402", "endpoint": "http://localhost:3101/work", "version": "v2" }
   ],
   "skills": [
-    { "id": "research.web", "priceUsdc": "0.05", "etaSec": 30 }
+    { "id": "verify.filespec", "priceUsdc": "0.02", "etaSec": 10 }
   ],
   "registrations": [
     { "agentId": null, "agentRegistry": "eip155:48816:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" }
@@ -262,11 +351,7 @@ Each agent has its own `agent-card.json`, hosted by its own server at `GET /`. E
 }
 ```
 
-`scripts/register-agent.ts` (one-shot per agent):
-1. Loads `agent-card.json`.
-2. Uploads to a public URL (IPFS via Pinata if available; else `data:` URI baked into tx).
-3. Calls `IdentityRegistry.register(agentURI)` — mints ERC-721, returns `agentId`.
-4. Writes `agentId` back into the agent's `.env`.
+`scripts/register-agent.ts` registers all 4 agents in one pass and writes the resulting agent IDs into `.env`.
 
 ---
 
@@ -350,21 +435,23 @@ where `avgReputation` is fetched via `reputationRegistry.getSummary(agentId, [],
 
 ## 11. Demo Script (2 minutes, no slides)
 
-> *Spoken in present tense. Browser open at `http://localhost:3000`. Three terminal panes showing Foreman + 2 Specialists, each logging.*
+> *Browser at `http://localhost:3000`. Split screen: Marcus (client) on left, Sarah (freelancer) on right, verification flow center. Four agent terminals visible on a second display.*
 
-| Time | Action | What the audience sees |
+| Time | Action | What you say |
 |---|---|---|
-| 0:00 | "This is **HERD**. AI agents that hire each other on Bitcoin." | Title card on dashboard |
-| 0:15 | Type into prompt box: *"Write a 300-word brief on Bitcoin L2 trade-offs with three sources."* Click **Run**. | Brief appears in left pane |
-| 0:25 | Foreman decomposes → 2 subtasks pop up: `research.web` + `write.brief` | Subtasks slide in as cards |
-| 0:35 | Foreman solicits bids → 2 Specialists respond. Bid table renders. | Bid amounts + reputation scores |
-| 0:45 | Foreman dispatches Researcher → HTTP 402 → x402 payment → tx hash appears with link to explorer | Live tx toast with explorer link |
-| 1:10 | Researcher returns artifact (3 sourced bullets); Foreman dispatches Writer with researcher's output as context | Second tx toast |
-| 1:35 | Writer returns 300-word brief; Foreman compiles → final deliverable shown | Final brief rendered |
-| 1:45 | Foreman posts reputation feedback → both Specialists' scores tick up | Reputation numbers animate |
-| 1:55 | "All settled on Bitcoin via BitVM2. Three agents, three identities, three payments — zero human clicks after the prompt." | Receipt card with all tx hashes |
+| 0:00 | Agreement card empty; Marcus's wallet shows $250, Sarah's shows $0. | *"Sarah just landed a $200 logo job. Today she'd wait 19 days. Watch this."* |
+| 0:10 | Marcus clicks **Fund Escrow** → $200 leaves his wallet → Escrow contract on GOAT shows $200. Tx toast links to explorer. | *"$200 USDC locked on Bitcoin-secured GOAT. Neither side controls it now."* |
+| 0:25 | Criteria card lights up: "1024×1024 PNG, brand colors #FF5733 + #1A1A1A, delivered today." | *"An AI helped them write these criteria upfront so there's nothing fuzzy."* |
+| 0:40 | Sarah drags `logo.png` onto her panel. | *"Sarah delivers."* |
+| 0:48 | Lead Verifier card lights up: *"Dispatching 3 specialists…"* | *"The Lead Verifier is a real OpenClaw agent with its own ERC-8004 identity — 247 of its last 250 verdicts were correct."* |
+| 0:52 | Three cards bloom: FileSpec, ColorVision, AestheticJudge — each shows *"Paying via x402… ✓"* then a verdict. | *"Three agent-to-agent x402 payments. Each specialist signs its verdict. ALL ON-CHAIN."* |
+| 1:08 | Lead Verifier aggregates: ✓✓✓ → big green **VERIFIED** stamp. | *"All criteria pass. The agent signs a release transaction."* |
+| 1:15 | Escrow.release() tx broadcasts → Sarah's wallet jumps $0 → $200. | *"Boom. $200. In Sarah's wallet. From a startup in Canada to a designer in Nigeria. 30 seconds. No middleman."* |
+| 1:30 | Switch tab to GOAT explorer; show all 4 txs (3 x402 + 1 release). | *"Real transactions. Bitcoin-secured. Auditable."* |
+| 1:45 | Reputation registry tx posts → Sarah's on-chain reputation ticks up. | *"Her reputation is portable. She can take it to her next client on any platform."* |
+| 2:00 | Closing line. | *"63% of freelancers wait over a month to get paid. PaidProof makes that 30 seconds. The middleman was the bug."* |
 
-Backup if live tx is slow: pre-recorded 30s screencap embedded in `apps/dashboard/public/demo.mp4`.
+Backup if testnet RPC is slow: dashboard falls back to `X402_MODE=mock` and synthesises tx hashes; narrative is identical.
 
 ---
 
@@ -372,12 +459,12 @@ Backup if live tx is slow: pre-recorded 30s screencap embedded in `apps/dashboar
 
 | Risk | Likelihood | Fallback |
 |---|---|---|
-| `@goatnetwork/agentkit` API changes mid-hackathon | medium | Bypass AgentKit — use `viem` + direct contract ABIs (`shared/src/abi.ts`). The `julies-claw` demo proves this works. |
-| x402 facilitator not reachable | low | Implement local verification mode in `x402-hono` config — verify signature client-side and skip facilitator. |
-| GOAT testnet3 RPC down or slow | medium | Switch to mock mode: dashboard reads from a recorded fixture; agents log "would settle X USDC". Demoable narrative preserved. |
-| ERC-8004 registration tx fails (gas etc.) | low | Pre-register all three agents at 11:30 AM (before noon). Hard-code `agentId`s into `.env`. |
-| LLM API quota exhausted | low | Pre-cache 2–3 canned deliverables keyed off prompt hash; fall through on miss. |
-| Faucet empty / can't get BTC for gas | medium | Reuse master wallet from `GOATX402_API_KEY` distribution; fan out gas via `scripts/fund-agents.ts`. |
+| Escrow deploy tx fails mid-hackathon | medium | Pre-deploy at 11:30 AM. Hard-code `ESCROW_ADDRESS` in `.env`. Keep deploy script idempotent. |
+| GOAT testnet3 RPC down or slow | medium | `X402_MODE=mock` short-circuits all on-chain calls. Demo narrative preserved with synthetic tx hashes. |
+| Vision LLM (GPT-4o) flakes on logo verdict | medium | AestheticJudge has a deterministic fallback ("width ≥ 256 AND height ≥ 256 AND not all-white") that still produces a signed verdict. |
+| ERC-8004 registration tx fails | low | Pre-register all 4 agents at 11:30 AM. Hard-code `agentId`s into `.env`. |
+| Client lacks USDC allowance on Escrow | low | Dashboard's fund button does `approve` then `fund` in one click via viem multicall. |
+| Faucet empty / can't get BTC for gas | medium | Reuse master wallet via `scripts/fund-agents.ts` to fan out gas. |
 | Time overruns | high | Hard cutoff at 4:30 PM for new code. 4:30–5:30 PM is **demo polish only**. |
 
 ---
@@ -386,16 +473,17 @@ Backup if live tx is slow: pre-recorded 30s screencap embedded in `apps/dashboar
 
 | Time | Milestone | Owner |
 |---|---|---|
-| 11:00 | Kickoff. This blueprint locked. | Mastermind |
-| 11:15 | Workshop attended; latest credentials grabbed; `.env` finalized | Mastermind |
-| 11:30 | Repo scaffolded; `pnpm install` green; constants filled | Sub-agent: **Bootstrapper** |
-| 12:00 | All 3 agents register on ERC-8004; agentIds in `.env` | Sub-agent: **Onboarder** |
-| 13:00 | Researcher + Writer servers respond 402 then succeed locally | Sub-agent: **SpecialistBuilder** |
-| 14:00 | Foreman decomposes brief → bids → dispatch loop works end-to-end | Sub-agent: **ForemanBuilder** |
-| 15:00 | Dashboard renders brief input, swarm timeline, tx toasts via SSE | Sub-agent: **UIBuilder** |
-| 15:30 | Reputation feedback posted after job; scores visible in dashboard | Sub-agent: **ReputationWeaver** |
+| 11:00 | Pivot from HERD locked. PaidProof blueprint v2.0 sealed. | Mastermind |
+| 11:15 | `npm install` green across all packages; tsc clean | Bootstrapper |
+| 11:30 | Escrow.sol deployed; `ESCROW_ADDRESS` in `.env` | Sub-agent: **EscrowDeployer** |
+| 12:00 | All 4 agents register on ERC-8004; agentIds in `.env` | Sub-agent: **Onboarder** |
+| 13:00 | FileSpec + ColorVision + AestheticJudge respond 402 then verdict | Sub-agent: **SpecialistBuilder** |
+| 14:00 | Lead Verifier parses criteria → dispatches 3 specialists → aggregates | Sub-agent: **VerifierBuilder** |
+| 14:30 | Lead Verifier signs `Escrow.release()` on full pass | Sub-agent: **EscrowReleaser** |
+| 15:00 | Dashboard split-screen: client fund button, freelancer upload, verifier panel | Sub-agent: **UIBuilder** |
+| 15:30 | Reputation feedback posted; portable rep visible | Sub-agent: **ReputationWeaver** |
 | 16:30 | End-to-end live run on testnet3 passes 3× in a row | Mastermind |
-| 17:00 | Demo polish: pretty cards, sound effects, fallback video recorded | Sub-agent: **Polisher** |
+| 17:00 | Demo polish: copy, animations, fallback video recorded | Sub-agent: **Polisher** |
 | 17:30 | Dry-run demo with stopwatch ≤ 110s | Mastermind |
 | 17:45 | Submit | Mastermind |
 
@@ -405,32 +493,34 @@ Backup if live tx is slow: pre-recorded 30s screencap embedded in `apps/dashboar
 
 The project ships if **all** of the following are true at 5:45 PM:
 
-1. ✅ Three distinct ERC-8004 agent IDs are visible on the GOAT explorer.
-2. ✅ At least one end-to-end run produces ≥ 2 on-chain x402 settlement txs.
-3. ✅ Reputation feedback was successfully written to the Reputation Registry for ≥ 1 specialist.
-4. ✅ The dashboard performs the demo flow in < 120 seconds without manual terminal intervention.
-5. ✅ `README.md` lets a fresh judge clone + `pnpm dev` and hit a working URL in < 5 minutes.
+1. ✅ `Escrow.sol` is deployed on GOAT Testnet3 with a `Funded` event and a `Released` event from the demo run.
+2. ✅ Four ERC-8004 agent IDs (Lead Verifier + 3 specialists) visible on the GOAT explorer.
+3. ✅ At least one full demo produces ≥ 3 on-chain x402 settlements + 1 escrow release tx.
+4. ✅ Reputation feedback was written to the Reputation Registry for ≥ 1 specialist + the freelancer.
+5. ✅ Dashboard performs the demo in < 120 seconds with zero manual terminal intervention.
+6. ✅ `README.md` lets a fresh judge clone + `npm install` + `npm run dev` and hit a working URL in < 5 minutes.
 
-If any item fails, fall back to mock mode (#12) — narrative is preserved, judges still see the swarm logic.
+If any item fails, fall back to `X402_MODE=mock` (#12) — narrative is preserved, judges still see the verification logic.
 
 ---
 
 ## 15. Post-Hackathon Vision (for judge Q&A)
 
-- **v1.1** — On-chain `BidBoard` so any ERC-8004 agent can discover open jobs.
-- **v1.2** — `JobEscrow` with milestone releases and SLA-based slashing.
-- **v1.3** — Validator agents (also ERC-8004) that earn fees for arbitrating disputes.
-- **v2.0** — Open the marketplace: anyone deploys a Specialist agent; Foreman is a thin client. HERD becomes the **labour layer** of the agent economy.
+- **v1.1** — Milestone-based escrows (split a $5k retainer into 10 weekly releases gated by AI commit-watcher).
+- **v1.2** — Second-opinion agents: if the freelancer disputes, a higher-rep verifier re-judges for an x402 fee.
+- **v1.3** — Marketplace of specialist verifiers (e.g. CodeReviewAgent, VideoCutAgent, CopyToneAgent). Open SDK.
+- **v2.0** — Be the rail under Fiverr / Upwork / Toptal. 1% take rate vs their 10%. Reputation portability is the moat.
 
-Revenue model: 2–5% protocol fee on each settled subtask, paid in USDC, routed to a HERD treasury contract.
+Market: $400B freelance economy, 14% YoY. Comparable exits: Wise IPO $11B, Deel $12B. Revenue model: 1% protocol fee on every released escrow, routed to a PaidProof treasury contract.
 
 ---
 
 ## 16. Glossary
 
-- **Brief** — natural-language job description from the Buyer.
-- **Subtask** — typed unit of work emitted by Foreman decomposition (`research.web`, `write.brief`, `validate.fact`, …).
-- **Specialist** — an agent that advertises a `skills[]` array on its agent card.
-- **Bid** — `{ priceUsdc, etaSec, agentId, signature }` returned in response to `GET /bid?spec=…`.
-- **Settlement receipt** — base64 JSON in `X-PAYMENT-RESPONSE` header containing on-chain tx hash.
+- **Criterion** — a single requirement on the deliverable, e.g. `{ kind: "filespec", mime: "image/png", widthPx: 1024, heightPx: 1024 }`.
+- **Verdict** — `{ pass: boolean, confidence: number, reasoning: string }` returned by a specialist for one criterion bucket.
+- **Escrow Job** — the on-chain state for one freelance contract: `{ jobId, client, freelancer, amount, status }`.
+- **Lead Verifier** — the OpenClaw orchestrator agent that dispatches specialists and signs `Escrow.release()`.
+- **Specialist** — a single-purpose verification agent (FileSpec / ColorVision / AestheticJudge).
+- **Settlement receipt** — base64 JSON in `X-PAYMENT-RESPONSE` header containing the on-chain tx hash of the x402 micropayment.
 - **Agent card** — ERC-8004 registration JSON resolved from `tokenURI` of the agent's NFT.

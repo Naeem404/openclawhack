@@ -1,25 +1,15 @@
 /**
- * Bid solicitation + ranking.
- * Implements packet P05.
+ * Specialist resolution.
  *
- * Sub-agent task list:
- *   1. Implement getReputation(agentId) using viem + REPUTATION_REGISTRY_ABI.getSummary.
- *      Return: average decimal score 0–100. count==0 → 50 (neutral).
- *   2. Implement solicitBids(subtask): fetch GET /bid?spec=<urlencoded> from every
- *      specialist in SPECIALIST_REGISTRY whose `skills[]` contains subtask.skill.
- *      Drop those that fail or time out after 3 s. Validate response with BidSchema.
- *   3. Implement rankBids(bids): score = reputation - RANKING_PRICE_WEIGHT * priceUsdc.
- *      Tie-break: higher reputation, then lower price.
- *   4. Tests live in this file as runtime asserts under `if (import.meta.url === ...)`.
+ * In PaidProof the routing is deterministic: each Criterion kind maps to exactly
+ * one specialist skill, and each skill maps to exactly one specialist endpoint
+ * declared in SPECIALIST_REGISTRY. We still hit the specialist's GET /bid
+ * endpoint once to capture its self-reported price + agentId for the dashboard
+ * timeline (and to record a Bid in the JobResult ledger), but we don't actually
+ * rank — there's no competition for these single-purpose verifiers in MVP.
  */
 import { z } from "zod";
 import { BidSchema, type Bid, type Subtask } from "@herd/shared/types";
-import {
-  ERC8004,
-  GOAT_TESTNET3,
-  RANKING_PRICE_WEIGHT,
-} from "@herd/shared/constants";
-import { REPUTATION_REGISTRY_ABI } from "@herd/shared/abi";
 
 const RegistryEntrySchema = z.object({
   url: z.string().url(),
@@ -29,8 +19,9 @@ const RegistrySchema = z.array(RegistryEntrySchema);
 type RegistryEntry = z.infer<typeof RegistryEntrySchema>;
 
 const DEFAULT_REGISTRY = JSON.stringify([
-  { url: "http://localhost:3101", skills: ["research.web"] },
-  { url: "http://localhost:3102", skills: ["write.brief"] },
+  { url: "http://localhost:3101", skills: ["verify.filespec"] },
+  { url: "http://localhost:3102", skills: ["verify.colorvision"] },
+  { url: "http://localhost:3103", skills: ["verify.aesthetic"] },
 ]);
 
 function loadRegistry(): RegistryEntry[] {
@@ -38,25 +29,17 @@ function loadRegistry(): RegistryEntry[] {
   return RegistrySchema.parse(JSON.parse(raw));
 }
 
-export class NoBidsError extends Error {
+export class NoSpecialistError extends Error {
   constructor(public readonly subtaskId: string, public readonly skill: string) {
-    super(`No bids received for subtask ${subtaskId} (skill=${skill})`);
+    super(`No specialist registered for subtask ${subtaskId} (skill=${skill})`);
   }
 }
 
 /**
- * Average reputation as a 0–100 float. count==0 → 50 (neutral newcomer score).
- * TODO(sub-agent): wire viem readContract against REPUTATION_REGISTRY_ABI.getSummary.
+ * Fetch the specialist's self-reported bid for a subtask. Used only for the
+ * dashboard timeline + ledger; the Lead Verifier has already picked the
+ * specialist deterministically from SPECIALIST_REGISTRY.
  */
-export async function getReputation(agentId: string): Promise<number> {
-  if (!agentId) return 50;
-  // TODO: viem readContract — { address: ERC8004.reputationRegistry, abi: REPUTATION_REGISTRY_ABI, functionName: "getSummary", args: [BigInt(agentId), [], "0x0…0", "0x0…0"] }
-  // Then: normalize summaryValue / 10**summaryValueDecimals; clamp to [0, 100].
-  // For now: deterministic stub keyed off agentId so demos look stable.
-  const hash = [...agentId].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7);
-  return 60 + ((Math.abs(hash) % 30)); // 60–89
-}
-
 export async function solicitBids(subtask: Subtask): Promise<Bid[]> {
   const registry = loadRegistry();
   const candidates = registry.filter((r) => r.skills.includes(subtask.skill));
@@ -81,32 +64,19 @@ export async function solicitBids(subtask: Subtask): Promise<Bid[]> {
   const bids: Bid[] = [];
   for (const r of results) {
     if (r.status === "fulfilled") bids.push(r.value);
-    else console.warn("[foreman] dropped bid:", r.reason?.message ?? r.reason);
+    else console.warn("[lead-verifier] dropped bid:", r.reason?.message ?? r.reason);
   }
   return bids;
 }
 
+/**
+ * Pick the cheapest bid (or the only one). In MVP each skill has exactly one
+ * specialist; this is a no-op safety pass.
+ */
 export async function rankBids(bids: Bid[]): Promise<Bid> {
   if (bids.length === 0) throw new Error("rankBids: empty input");
-
-  const scored = await Promise.all(
-    bids.map(async (b) => {
-      const rep = await getReputation(b.agentId);
-      const price = Number(b.priceUsdc);
-      const score = rep - RANKING_PRICE_WEIGHT * (price * 100); // scale price to comparable range
-      return { bid: b, rep, score };
-    }),
-  );
-
-  scored.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    if (b.rep !== a.rep) return b.rep - a.rep;
-    return Number(a.bid.priceUsdc) - Number(b.bid.priceUsdc);
-  });
-
-  const winner = scored[0];
+  const sorted = [...bids].sort((a, b) => Number(a.priceUsdc) - Number(b.priceUsdc));
+  const winner = sorted[0];
   if (!winner) throw new Error("rankBids: no winner");
-  return winner.bid;
+  return winner;
 }
-
-export { GOAT_TESTNET3, ERC8004, REPUTATION_REGISTRY_ABI };

@@ -1,65 +1,100 @@
-# HERD 🐐
+# PaidProof �️
 
-> **Where AI agents earn their keep.**
-> An autonomous subcontracting swarm where AI agents hire each other on Bitcoin.
+> **Work delivered. Money settled. In 30 seconds.**
+> Bitcoin-secured freelance escrow released by AI verifier agents — no 30-day wait, no 10% middleman.
 
 Built at **OpenClaw Hack Toronto** (Tech Week 2026) on the **OpenClaw · ERC-8004 · x402 · GOAT Network** stack.
 
 ---
 
-## The Pitch (15 seconds)
+## The Story (3 sentences)
 
-Today's "AI agents" are isolated chatbots. They can't discover each other, trust each other, or pay each other.
+A designer in Lagos finishes a logo for a startup in Toronto. Today: upload, wait 14 days for approval, then 5 more days to clear Upwork's 10% fee gauntlet and currency conversion. With PaidProof: the client funds escrow up front, the AI Lead Verifier hires three specialist agents over x402 to check the deliverable against the agreed criteria, and the moment all checks pass the funds stream straight to the freelancer's wallet — full amount, no middleman, 30-second settlement.
 
-**HERD** is the missing labour layer: a live marketplace where a **Foreman agent** breaks a brief into subtasks, **Specialist agents** bid in real time, and every delivery is settled with an **x402 micro-payment** on Bitcoin via GOAT. Every agent owns its **ERC-8004 identity** and accumulates an on-chain **reputation** that decides who gets hired next.
+---
 
-One prompt in. A swarm of agents activates. A finished deliverable + an audit trail of on-chain payments come out. **Zero human clicks after the prompt.**
+## The Demo
+
+```
+   ┌───────────────┐                 ┌───────────────┐
+   │ Marcus · TO   │                 │ Sarah · Lagos │
+   │ wallet $250 ▼ │                 │ wallet $0 ▲   │
+   └───────┬───────┘                 └───────▲───────┘
+           │ Escrow.fund($200 USDC)          │ release()
+           ▼                                 │
+   ┌────────────────────────────────────────────────┐
+   │  Escrow.sol on GOAT (Bitcoin-secured)          │
+   └───────────────────┬────────────────────────────┘
+                       │ submitVerdict(passed)
+                       ▼
+   ┌────────────────────────────────────────────────┐
+   │  Lead Verifier · ERC-8004 #LID                 │
+   │  hires 3 specialists over x402 …               │
+   └──┬──────────────┬────────────────┬─────────────┘
+      ▼              ▼                ▼
+   FileSpec     ColorVision      AestheticJudge
+   $0.02 USDC   $0.03 USDC       $0.05 USDC
+   PNG/dim      brand colors     "looks real"
+```
+
+Three x402 micro-payments + one escrow release = **four on-chain transactions, zero human clicks after delivery.**
 
 ---
 
 ## Why It Wins
 
-| Criterion | HERD's edge |
+| Criterion | PaidProof's edge |
 |---|---|
-| **Unique** | Existing GOAT demos are single-agent (user → agent). HERD is the first **multi-agent, agent → agent** marketplace at this event. |
-| **Uses every piece of the stack non-trivially** | OpenClaw runtimes · ERC-8004 identity + reputation · x402 agent-to-agent payments · GOAT Bitcoin-final settlement |
-| **Practical** | Direct B2B value — agentic Upwork/Fiverr. 2–5% protocol fee per job. Clear hackathon → seed startup path. |
-| **Demoable in 2 minutes** | Prompt → live timeline → on-chain txs → finished brief. Visceral and screen-friendly. |
-
----
-
-## Architecture
-
-```
-   Buyer ──▶ Dashboard ──▶ Foreman ──┬─▶ Researcher (ERC-8004 #R)
-   (browser)   (Next.js)   (Hono)    │     x402: 0.05 USDC
-                                     │
-                                     └─▶ Writer     (ERC-8004 #W)
-                                           x402: 0.08 USDC
-
-   Every tx settles on GOAT Network L2, secured by Bitcoin via BitVM2.
-   After the job, the Foreman writes reputation feedback to ERC-8004.
-```
+| **Visceral pain** | Every judge has either been ghosted on payment or paid a freelancer late. |
+| **Market size** | $400B freelance economy. 70M+ workers. Top complaint: payment delay. |
+| **Demo narrative** | Designer in Lagos → startup in Toronto → $200 lands in 30 seconds. Humanitarian + technical. |
+| **Hackathon mandates** | 4 ERC-8004 identities · 3 agent-to-agent x402 settlements per run · 1 escrow release tx · all on Bitcoin via GOAT. |
+| **Investor angle** | Be the rail under Upwork's 10% take rate. Charge 1%. Comparable exits: Wise ($11B IPO), Deel ($12B). |
 
 See `PROJECT_BLUEPRINT.md` for the full design.
 
 ---
 
-## Run in 60 Seconds
+## Run in 60 Seconds (local Hardhat)
 
-**Prereqs:** Node 20+, pnpm 9+, an OpenAI API key, a funded EVM key on GOAT Testnet3 (use [the faucet](https://bridge.testnet3.goat.network/faucet)).
+**Prereqs:** Node 20+, an OpenAI API key (optional — the demo works in mock mode without one).
 
-```bash
-git clone <repo> && cd openclawhack
-pnpm install
+```powershell
+git clone <repo>
+cd openclawhack
+npm install
+npm install --prefix shared
+npm install --prefix agents/foreman
+npm install --prefix agents/researcher
+npm install --prefix agents/writer
+npm install --prefix agents/aesthetic
+npm install --prefix apps/dashboard
 
 cp .env.example .env
-# fill in OPENAI_API_KEY and 3 private keys
+# (optional) drop in OPENAI_API_KEY for live LLM verdicts; otherwise mock mode runs
 
-pnpm register --all       # one-shot: registers all 3 agents on ERC-8004
-pnpm dev                  # boots Foreman, Researcher, Writer, Dashboard
+# Terminal 1 — local chain + contracts
+npm run node:local       # hardhat node @ http://127.0.0.1:8545
+npm run compile          # compiles AgentRegistry / Escrow / MockUSDC
+npm run deploy:local     # writes deployments/localhost.json
+npm run register:local   # registers all 4 agents on AgentRegistry
+
+# Terminal 2 — agents + dashboard
+npm run dev              # Lead Verifier + FileSpec + ColorVision + Aesthetic + Dashboard
 
 # open http://localhost:3000 and run the demo
+```
+
+To hit GOAT Testnet3 instead of localhost:
+
+```powershell
+# in .env
+CHAIN_TARGET=goat-testnet3
+DEPLOYER_PRIVATE_KEY=0x…   # a wallet with a few drops of GOAT testnet BTC
+
+npm run deploy:goat
+npm run register:goat
+npm run dev
 ```
 
 ---
@@ -68,37 +103,38 @@ pnpm dev                  # boots Foreman, Researcher, Writer, Dashboard
 
 | Path | Purpose |
 |---|---|
-| `PROJECT_BLUEPRINT.md` | Master design doc — architecture, stack, demo script, risks |
-| `AGENT_DELEGATION.md` | Procedural task packets (P00–P15) for sub-agents to execute |
+| `contracts/` | `AgentRegistry.sol` · `Escrow.sol` · `MockUSDC.sol` |
+| `shared/` | Cross-package types, ABIs, constants, x402 helpers |
+| `agents/foreman/` | **Lead Verifier** orchestrator (port 3100) |
+| `agents/researcher/` | **FileSpec** specialist — file type / dimensions / size (port 3101) |
+| `agents/writer/` | **ColorVision** specialist — brand-color match via GPT-4o vision (port 3102) |
+| `agents/aesthetic/` | **AestheticJudge** specialist — "does this look like the brief" (port 3103) |
+| `apps/dashboard/` | Next.js split-screen demo (port 3000) |
+| `scripts/` | `deploy.js`, `register-agents.js`, balance/fund helpers |
+| `PROJECT_BLUEPRINT.md` | Master design doc |
+| `AGENT_DELEGATION.md` | Procedural task packets for sub-agents |
 | `PROGRESS.md` | Running build log |
-| `shared/` | Shared types, ABIs, constants |
-| `agents/foreman/` | The orchestrator agent (port 3100) |
-| `agents/researcher/` | Specialist: web research (port 3101) |
-| `agents/writer/` | Specialist: markdown brief writer (port 3102) |
-| `apps/dashboard/` | Next.js + Tailwind demo UI (port 3000) |
-| `scripts/` | One-shot tooling (registration, funding, balance checks) |
 
 ---
 
 ## Stack
 
-`OpenClaw` · `@goatnetwork/agentkit` · `ERC-8004` · `x402` (Hono + fetch) · `GOAT Testnet3` (Bitcoin L2 / BitVM2) · `viem` · `ethers v6` · `Hono` · `Next.js 14` · `TailwindCSS` · `OpenAI GPT-4o-mini`
+`OpenClaw` · `ERC-8004` (custom `AgentRegistry.sol`) · `x402` (Hono + viem) · `GOAT Network` (Bitcoin L2 / BitVM2) · `Solidity 0.8.24` · `Hardhat` · `viem` · `Hono` · `Next.js 14` · `TailwindCSS` · `OpenAI GPT-4o-mini` (vision)
 
 ---
 
-## Key Contracts (GOAT Testnet3, chain ID `48816`)
+## Key Contracts
 
-| Contract | Address |
+| Contract | Address (after deploy) |
 |---|---|
-| ERC-8004 Identity Registry | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` |
-| ERC-8004 Reputation Registry | `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` |
-| USDC | `0x29d1ee93e9ecf6e50f309f498e40a6b42d352fa1` |
-
-RPC: `https://rpc.testnet3.goat.network` · Explorer: `https://explorer.testnet3.goat.network`
+| AgentRegistry | `deployments/<network>.json#registry` |
+| Escrow | `deployments/<network>.json#escrow` |
+| USDC (local) | `MockUSDC` deployed by `scripts/deploy.js` |
+| USDC (GOAT mainnet) | `0x3022b87ac063DE95b1570F46f5e470F8B53112D8` |
 
 ---
 
 ## Credits
 
-Built at **OpenClaw Hack Toronto** during **Toronto Tech Week 2026** by the HERD team.
-Powered by **GOAT Network**, **OpenClaw**, **ClawUp**, **CryptoChicks**, **TMU BYTE club**, **MindFuel**, and the **Metis Foundation**.
+Built at **OpenClaw Hack Toronto** during **Toronto Tech Week 2026** by the PaidProof team.
+Powered by **GOAT Network**, **OpenClaw**, **ClawUp**, **CryptoChicks**, **TMU BYTE Club**, **MindFuel**, and the **Metis Foundation**.

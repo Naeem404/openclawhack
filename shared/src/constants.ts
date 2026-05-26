@@ -1,7 +1,6 @@
 /**
- * GOAT Testnet3 chain constants and HERD protocol parameters.
+ * GOAT chain constants and PaidProof protocol parameters.
  * Single source of truth — every workspace imports from here.
- * Source: https://github.com/GOATNetwork/GOAT-Hackathon-2026
  */
 
 export const GOAT_TESTNET3 = {
@@ -12,55 +11,119 @@ export const GOAT_TESTNET3 = {
   nativeCurrency: { name: "Bitcoin", symbol: "BTC", decimals: 18 },
 } as const;
 
-/** ERC-20 token addresses on GOAT Testnet3. */
+export const GOAT_MAINNET = {
+  chainId: 2345,
+  name: "GOAT Mainnet",
+  rpcUrl: "https://rpc.goat.network",
+  explorerUrl: "https://explorer.goat.network",
+  nativeCurrency: { name: "Bitcoin", symbol: "BTC", decimals: 18 },
+} as const;
+
+/** Hardhat local chain (deployer mnemonic — used by `npm run node:local`). */
+export const HARDHAT_LOCAL = {
+  chainId: 31337,
+  name: "Hardhat Localhost",
+  rpcUrl: "http://127.0.0.1:8545",
+  explorerUrl: "",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+} as const;
+
+/** ERC-20 token addresses on GOAT Testnet3 (overridden per env in dev). */
 export const TOKENS = {
+  /** Real USDC.e on GOAT mainnet: 0x3022b87ac063DE95b1570F46f5e470F8B53112D8 */
   USDC: "0x29d1ee93e9ecf6e50f309f498e40a6b42d352fa1",
   USDT: "0xdce0af57e8f2ce957b3838cd2a2f3f3677965dd3",
 } as const;
 
 export const USDC_DECIMALS = 6;
 
-/** ERC-8004 deployments on GOAT Testnet3. */
+/**
+ * PaidProof's custom contracts. Addresses populated from `deployments/<network>.json`
+ * after `npm run deploy:local` or `npm run deploy:goat`. Values here are placeholders;
+ * agent code prefers `process.env.PAIDPROOF_*` overrides.
+ */
+export const PAIDPROOF = {
+  agentRegistry: process.env.PAIDPROOF_REGISTRY_ADDRESS ?? "",
+  escrow: process.env.PAIDPROOF_ESCROW_ADDRESS ?? "",
+  usdc: process.env.PAIDPROOF_USDC_ADDRESS ?? "",
+} as const;
+
+/** Legacy ERC-8004 deployments on GOAT Testnet3 (kept for optional discovery). */
 export const ERC8004 = {
   identityRegistry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
   reputationRegistry: "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
-  /** CAIP-10 style registry identifier embedded in agent cards. */
   registryNamespace: "eip155:48816:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
 } as const;
 
 /** Default agent ports for local dev. */
 export const PORTS = {
   dashboard: 3000,
-  foreman: 3100,
-  researcher: 3101,
-  writer: 3102,
+  foreman: 3100,      // Lead Verifier
+  researcher: 3101,   // FileSpec specialist
+  writer: 3102,       // ColorVision specialist
+  aesthetic: 3103,    // AestheticJudge specialist (NEW)
 } as const;
 
 /** Bid ranking: score = reputation - RANKING_PRICE_WEIGHT * priceUsdc. */
 export const RANKING_PRICE_WEIGHT = 0.5;
 
-/** Default per-call prices in base USDC units (6 decimals). */
+/** Per-specialist x402 price in base USDC units (6 decimals). */
 export const DEFAULT_PRICES = {
-  /** 0.05 USDC */
-  research_web: 50_000n,
-  /** 0.08 USDC */
-  write_brief: 80_000n,
+  /** 0.02 USDC — FileSpec specialist */
+  verify_filespec: 20_000n,
+  /** 0.03 USDC — ColorVision specialist */
+  verify_colorvision: 30_000n,
+  /** 0.05 USDC — AestheticJudge specialist */
+  verify_aesthetic: 50_000n,
 } as const;
 
-/** Hackathon-defined skill ids. Specialists advertise these in their cards. */
+/**
+ * Skill ids advertised on each specialist's agent card and routed by the Lead Verifier.
+ *
+ * The Lead Verifier itself does not advertise a paid skill — it is the orchestrator
+ * that humans pay (indirectly, via the escrow) rather than via x402.
+ */
 export const SKILLS = {
-  RESEARCH_WEB: "research.web",
-  WRITE_BRIEF: "write.brief",
+  /** Lead Verifier orchestrator (no x402 price, no /work endpoint pricing). */
+  VERIFY_LEAD: "verify.lead",
+  /** FileSpec specialist — checks file type, dimensions, size. */
+  VERIFY_FILESPEC: "verify.filespec",
+  /** ColorVision specialist — checks brand color presence. */
+  VERIFY_COLORVISION: "verify.colorvision",
+  /** AestheticJudge specialist — vision LLM "is this a real logo". */
+  VERIFY_AESTHETIC: "verify.aesthetic",
 } as const;
 
 export type SkillId = (typeof SKILLS)[keyof typeof SKILLS];
 
-/** Reputation Registry tag bytes32 helpers (kept as string literals; agents convert at call site). */
+/** Reputation tag literals (string form; agents bytes32-encode at call site). */
 export const REPUTATION_TAGS = {
-  SUBTASK: "herd.subtask",
+  VERIFICATION: "paidproof.verify",
+  DELIVERY: "paidproof.deliver",
+  PAYMENT: "paidproof.pay",
 } as const;
 
-/** GOAT requires explicit non-default gas pricing per the demo. */
+/** Job lifecycle on the Escrow contract — must match Solidity enum ordering. */
+export const ESCROW_STATUS = {
+  None: 0,
+  Open: 0,
+  Funded: 1,
+  Delivered: 2,
+  Verified: 3,
+  Released: 4,
+  Disputed: 5,
+  Refunded: 6,
+} as const;
+
+/** Agent roles on AgentRegistry — must match Solidity enum ordering. */
+export const AGENT_ROLES = {
+  Freelancer: 0,
+  Client: 1,
+  Verifier: 2,
+  Specialist: 3,
+} as const;
+
+/** GOAT requires explicit non-default gas pricing. */
 export const GOAT_GAS = {
   maxPriorityFeePerGas: 130_000n,
   maxFeePerGas: 1_000_000n,

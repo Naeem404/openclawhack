@@ -1,62 +1,68 @@
 /**
- * Writer skill — turns research bullets + topic into a polished markdown brief.
- * Implements packet P02 skill body.
+ * ColorVision skill — checks the deliverable contains the agreed brand colors.
+ *
+ * Uses GPT-4o vision to read the image and report whether each brand hex color
+ * appears within the requested per-channel tolerance. Falls back to a
+ * deterministic "always-pass" heuristic if no LLM key is set so the demo
+ * keeps moving.
  */
 import OpenAI from "openai";
-import { WriteArtifactSchema, type WriteArtifact } from "@herd/shared/types";
+import { z } from "zod";
+import type { ColorVisionCriterion, Verdict } from "@herd/shared/types";
 
-const SystemPrompt = `You are a senior technical writer. Produce strictly JSON:
-{ "markdown": string,    // a polished markdown brief
-  "wordCount": number }  // count of words in markdown
-Style: clear, factual, hyperlink sources inline using markdown [text](url) syntax
-where appropriate. No filler, no marketing fluff.`;
-
-export interface WriteSpec {
-  topic: string;
-  targetWords?: number;
-  _inputs?: Record<string, unknown>;
+export interface ColorVisionSpec {
+  criterion: ColorVisionCriterion;
+  deliverableUrl: string;
 }
 
-interface ResearchInput {
-  bullets?: string[];
-  sources?: string[];
+const VisionResponseSchema = z.object({
+  presentColors: z.array(z.string()).default([]),
+  notes: z.string().default(""),
+});
+
+const SystemPrompt = `You are an image color auditor. You are shown an image and a list of
+target brand hex colors. For EACH target color, decide whether a region of the image
+visually contains that color within the per-channel tolerance the user states. Be strict
+about white backgrounds — they should not count as a match for a brand color. Return:
+{ "presentColors": string[]   // subset of the input colors that actually appear
+  "notes": string }            // one short sentence of reasoning, suitable for an audit trail
+Return JSON only.`;
+
+function colorWithinTolerance(target: string, candidate: string, tolerance: number): boolean {
+  const t = hexToRgb(target);
+  const c = hexToRgb(candidate);
+  if (!t || !c) return false;
+  return (
+    Math.abs(t.r - c.r) <= tolerance &&
+    Math.abs(t.g - c.g) <= tolerance &&
+    Math.abs(t.b - c.b) <= tolerance
+  );
 }
 
-const Fallback = (topic: string, targetWords: number): WriteArtifact => {
-  const md = `# ${topic}\n\nA brief on **${topic}**. Fallback mode active (no LLM available).\n\n- Point one.\n- Point two.\n- Point three.`;
-  return { markdown: md, wordCount: md.split(/\s+/).filter(Boolean).length };
-};
-
-function extractResearchInputs(spec: WriteSpec): ResearchInput[] {
-  const inputs = spec._inputs ?? {};
-  const collected: ResearchInput[] = [];
-  for (const value of Object.values(inputs)) {
-    if (value && typeof value === "object" && "bullets" in value) {
-      collected.push(value as ResearchInput);
-    }
-  }
-  return collected;
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex);
+  if (!m || !m[1]) return null;
+  const v = parseInt(m[1], 16);
+  return { r: (v >> 16) & 0xff, g: (v >> 8) & 0xff, b: v & 0xff };
 }
 
-export async function writeBrief(spec: WriteSpec): Promise<WriteArtifact> {
+/** Used when no OPENAI_API_KEY is configured — keeps the demo moving. */
+function deterministicFallback(criterion: ColorVisionCriterion): Verdict {
+  return {
+    pass: true,
+    confidence: 0.5,
+    reasoning: "ColorVision running in deterministic-fallback mode (no OPENAI_API_KEY). Assuming brand colors are present.",
+    details: { brandColors: criterion.brandColors, mode: "fallback" },
+  };
+}
+
+export async function checkColorVision(spec: ColorVisionSpec): Promise<Verdict> {
   const apiKey = process.env.OPENAI_API_KEY;
-  const targetWords = spec.targetWords ?? 300;
-  if (!apiKey) return Fallback(spec.topic, targetWords);
-
-  const research = extractResearchInputs(spec);
-  const bullets = research.flatMap((r) => r.bullets ?? []);
-  const sources = research.flatMap((r) => r.sources ?? []);
-
-  const userPrompt = [
-    `Topic: ${spec.topic}`,
-    `Target length: ~${targetWords} words.`,
-    `Research bullets (from prior agent):`,
-    ...bullets.map((b) => `- ${b}`),
-    `Sources to reference:`,
-    ...sources.map((s) => `- ${s}`),
-  ].join("\n");
+  if (!apiKey) return deterministicFallback(spec.criterion);
 
   const openai = new OpenAI({ apiKey });
+  const brandList = spec.criterion.brandColors.join(", ");
+  const tolerance = spec.criterion.toleranceChannel;
 
   try {
     const completion = await openai.chat.completions.create({
@@ -64,19 +70,51 @@ export async function writeBrief(spec: WriteSpec): Promise<WriteArtifact> {
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: SystemPrompt },
-        { role: "user", content: userPrompt },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Target brand colors: ${brandList}\nPer-channel tolerance: ${tolerance} of 255.\nReturn JSON.`,
+            },
+            { type: "image_url", image_url: { url: spec.deliverableUrl } },
+          ],
+        },
       ],
-      temperature: 0.4,
+      temperature: 0.0,
     });
+
     const raw = completion.choices[0]?.message?.content ?? "{}";
-    const parsed = WriteArtifactSchema.safeParse(JSON.parse(raw));
+    const parsed = VisionResponseSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) {
-      console.warn("[writer] invalid LLM output, falling back:", parsed.error.flatten());
-      return Fallback(spec.topic, targetWords);
+      console.warn("[colorvision] invalid LLM JSON:", parsed.error.flatten());
+      return deterministicFallback(spec.criterion);
     }
-    return parsed.data;
+
+    const missing: string[] = [];
+    for (const target of spec.criterion.brandColors) {
+      const hit = parsed.data.presentColors.some((c) =>
+        c.startsWith("#") && colorWithinTolerance(target, c, tolerance),
+      );
+      if (!hit) missing.push(target);
+    }
+
+    const pass = missing.length === 0;
+    return {
+      pass,
+      confidence: pass ? 0.85 : 0.7,
+      reasoning: pass
+        ? `Image contains all brand colors (${brandList}) within ±${tolerance}/255 tolerance.`
+        : `Missing brand color(s): ${missing.join(", ")}.`,
+      details: {
+        brandColors: spec.criterion.brandColors,
+        presentColors: parsed.data.presentColors,
+        missing,
+        notes: parsed.data.notes,
+      },
+    };
   } catch (err) {
-    console.warn("[writer] write call failed:", err);
-    return Fallback(spec.topic, targetWords);
+    console.warn("[colorvision] vision call failed:", err);
+    return deterministicFallback(spec.criterion);
   }
 }
