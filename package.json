@@ -1,0 +1,44 @@
+{
+  "name": "paidproof",
+  "version": "1.0.0",
+  "description": "PaidProof — AI verifier agents release on-chain escrow the moment work is done. Built for the GOAT Network OpenClaw Hackathon.",
+  "main": "agents/server.js",
+  "scripts": {
+    "install:all": "npm install",
+    "node:local": "hardhat node",
+    "compile": "hardhat compile",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:goat": "hardhat run scripts/deploy.js --network goat",
+    "register:local": "hardhat run scripts/register-agents.js --network localhost",
+    "register:goat": "hardhat run scripts/register-agents.js --network goat",
+    "agents": "node agents/server.js",
+    "demo": "node agents/server.js",
+    "start": "node agents/server.js",
+    "seed": "hardhat run scripts/seed-demo.js --network localhost",
+    "test": "hardhat test"
+  },
+  "keywords": [
+    "openclaw",
+    "goat-network",
+    "erc-8004",
+    "x402",
+    "ai-agents",
+    "escrow"
+  ],
+  "author": "PaidProof Team",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.4",
+    "express": "^4.21.1",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.16"
+  }
+}
