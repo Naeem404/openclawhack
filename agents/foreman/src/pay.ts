@@ -2,21 +2,7 @@
  * x402 client wrapper for the Foreman.
  * Implements packet P06.
  *
- * Sub-agent task list:
- *   1. Build a viem WalletClient from FOREMAN_PRIVATE_KEY against GOAT testnet3.
- *   2. Implement paidPost(url, body, opts):
- *        a. POST without X-PAYMENT.
- *        b. If 200: decode X-PAYMENT-RESPONSE (if present) and return.
- *        c. If 402:
- *             - parse PAYMENT-REQUIRED (base64 JSON)
- *             - assert amount <= maxPriceUsdc * 10^USDC_DECIMALS
- *             - build a PaymentPayload per x402 v2 spec (scheme=exact, network=goat-testnet3)
- *             - sign EIP-712 typed-data with the wallet
- *             - retry with X-PAYMENT header (base64 JSON)
- *             - decode X-PAYMENT-RESPONSE and return
- *        d. Any other status: throw with status + body.
- *   3. Use the official x402 client library (@x402/fetch or x402-fetch) if available;
- *      else implement the loop manually following coinbase/x402 specs/transports-v1/http.md.
+ * Handles the 402 → pay → retry loop for autonomous agent payments.
  */
 import type { Address, Hex, WalletClient } from "viem";
 import type { SettlementResponse } from "@herd/shared/types";

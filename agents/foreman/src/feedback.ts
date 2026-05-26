@@ -2,15 +2,7 @@
  * Reputation Registry feedback poster.
  * Implements packet P07.
  *
- * Sub-agent task list:
- *   1. Build a viem WalletClient from FOREMAN_PRIVATE_KEY.
- *   2. Encode tag1 = bytes32("herd.subtask"), tag2 = bytes32(subtaskType).
- *      Use viem's stringToHex with size=32 (pad right with zeros).
- *   3. Call ReputationRegistry.giveFeedback(agentId, value, 0, tag1, tag2, "", "", 0x00…0).
- *      - success: value = 100
- *      - failure: value = -50
- *   4. Track idempotency in memory: key = `${foremanAgentId}:${specialistAgentId}:${subtaskType}:${jobId}`.
- *   5. Return { txHash }.
+ * Posts reputation feedback to ERC-8004 after subtask completion.
  */
 import { stringToHex, type Hex } from "viem";
 import { ERC8004, REPUTATION_TAGS, GOAT_GAS } from "@herd/shared/constants";

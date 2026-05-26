@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@herd/shared": "workspace:*",
+    "@herd/shared": "file:../shared",
     "dotenv": "^16.4.5",
     "ethers": "^6.13.4",
     "viem": "^2.21.55",

@@ -57,14 +57,7 @@ app.get("/bid", (c) => {
 /**
  * POST /work — x402-gated.
  *
- * TODO(sub-agent P01):
- *   1. Wrap this route in x402-hono middleware so unpaid requests return 402.
- *      Config: { scheme: "exact", network: "goat-testnet3", asset: TOKENS.USDC,
- *                amount: DEFAULT_PRICES.research_web.toString(),
- *                payTo: process.env.RESEARCHER_WALLET_ADDRESS,
- *                facilitator: process.env.X402_FACILITATOR_URL }
- *   2. On X402_MODE=local, swap the facilitator out for a local-verify shim.
- *   3. After verifySettlement, call performResearch(body.spec).
+ * Verifies payment via X-PAYMENT header, then performs research.
  */
 const WorkBodySchema = z.object({
   spec: z.object({

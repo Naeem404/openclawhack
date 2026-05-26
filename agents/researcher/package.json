@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@herd/shared": "workspace:*",
+    "@herd/shared": "file:../../shared",
     "@hono/node-server": "^1.13.7",
     "dotenv": "^16.4.5",
     "hono": "^4.6.13",

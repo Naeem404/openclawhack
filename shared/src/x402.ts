@@ -148,7 +148,7 @@ export async function verifyPayment(
       const valueOk = (l.args.value as bigint) >= wanted;
       const assetOk = l.address.toLowerCase() === required.asset.toLowerCase();
       return toMatches && valueOk && assetOk;
-    });
+    }) as { args: { from: string; to: string; value: bigint } } | undefined;
     if (!match) return { ok: false, error: "no matching USDC Transfer in receipt" };
 
     return {
