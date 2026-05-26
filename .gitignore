@@ -26,7 +26,8 @@ out/
 artifacts/
 cache/
 typechain-types/
-deployments/*.json
+deployments/localhost.json
+deployments/hardhat.json
 !deployments/.gitkeep
 
 # --- editor / OS ---

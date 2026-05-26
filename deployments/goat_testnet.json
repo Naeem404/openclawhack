@@ -1,0 +1,9 @@
+{
+  "network": "goat_testnet",
+  "chainId": 48816,
+  "registry": "0xd6096fbEd8bCc461d06b0C468C8b1cF7d45dC92d",
+  "usdc": "0x0aD6371dd7E9923d9968D63Eb8B9858c700abD9d",
+  "escrow": "0xAA5c5496e2586F81d8d2d0B970eB85aB088639c2",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "deployedAt": "2026-05-26T19:57:01.484Z"
+}
